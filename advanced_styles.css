@@ -1,0 +1,900 @@
+/* Advanced USB Monitoring System Styles
+   Featuring: Ethical hacking theme, network animations, scanning effects, and Termux-style text
+*/
+
+:root {
+  --primary-color: #00ff00;
+  --secondary-color: #0a0a0a;
+  --accent-color: #ff3e3e;
+  --text-color: #e0e0e0;
+  --terminal-bg: #121212;
+  --card-bg: rgba(20, 20, 20, 0.8);
+  --card-border: rgba(0, 255, 0, 0.3);
+  --card-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+  --font-mono: 'Courier New', monospace;
+  --scan-color: rgba(0, 255, 0, 0.5);
+  --node-color-1: rgba(0, 255, 0, 0.7);
+  --node-color-2: rgba(255, 0, 0, 0.7);
+  --node-color-3: rgba(0, 191, 255, 0.7);
+}
+
+/* Base Styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Background Animation Container */
+.background-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* Network Nodes Animation */
+.network-nodes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.node {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.7;
+  box-shadow: 0 0 10px currentColor;
+  animation: pulse 3s infinite alternate, moveNode 30s infinite linear;
+  will-change: transform, opacity;
+}
+
+.node::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, currentColor 0%, transparent 70%);
+  opacity: 0.3;
+}
+
+.node-1 {
+  width: 8px;
+  height: 8px;
+  background-color: var(--node-color-1);
+  color: var(--node-color-1);
+}
+
+.node-2 {
+  width: 12px;
+  height: 12px;
+  background-color: var(--node-color-2);
+  color: var(--node-color-2);
+}
+
+.node-3 {
+  width: 10px;
+  height: 10px;
+  background-color: var(--node-color-3);
+  color: var(--node-color-3);
+}
+
+/* Connection Lines */
+.connection {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  opacity: 0.3;
+  transform-origin: left center;
+  z-index: -1;
+}
+
+/* Scanning Animation - Horizontal Only */
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--scan-color) 20%,
+    var(--primary-color) 50%,
+    var(--scan-color) 80%,
+    transparent 100%);
+  box-shadow: 0 0 15px var(--primary-color);
+  animation: scan 8s linear infinite;
+  opacity: 0.7;
+  z-index: 0;
+}
+
+/* Binary Rain Effect */
+.binary-rain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.binary-column {
+  position: absolute;
+  top: -20%;
+  color: var(--primary-color);
+  font-size: 14px;
+  opacity: 0.15;
+  text-shadow: 0 0 5px var(--primary-color);
+  animation: binary-fall linear infinite;
+}
+
+/* Main Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Navigation Bar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: rgba(10, 10, 10, 0.8);
+  border-bottom: 1px solid var(--primary-color);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  margin-bottom: 30px;
+  border-radius: 5px;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  display: flex;
+  align-items: center;
+}
+
+.navbar-brand i {
+  margin-right: 10px;
+  font-size: 1.8rem;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 20px;
+}
+
+.navbar-links a {
+  color: var(--text-color);
+  text-decoration: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.navbar-links a:hover {
+  color: var(--primary-color);
+  background-color: rgba(0, 255, 0, 0.1);
+}
+
+.navbar-links a::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+.navbar-links a:hover::before {
+  width: 100%;
+}
+
+.navbar-links a.active {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+/* Termux-Style Terminal Cards */
+.terminal-card {
+  background-color: var(--terminal-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.terminal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), transparent);
+  opacity: 0.7;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.terminal-title {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.terminal-title i {
+  margin-right: 10px;
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-control {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.control-close {
+  background-color: #ff5f56;
+}
+
+.control-minimize {
+  background-color: #ffbd2e;
+}
+
+.control-maximize {
+  background-color: #27c93f;
+}
+
+.terminal-content {
+  font-family: var(--font-mono);
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.terminal-prompt {
+  color: var(--primary-color);
+  margin-right: 10px;
+}
+
+.terminal-command {
+  color: #ffffff;
+}
+
+.terminal-output {
+  color: #cccccc;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding-left: 20px;
+}
+
+.terminal-line {
+  display: flex;
+  margin-bottom: 5px;
+}
+
+/* Dashboard Cards */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.dashboard-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 25px rgba(0, 255, 0, 0.3);
+}
+
+.dashboard-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.1) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.card-title {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.card-title i {
+  margin-right: 10px;
+  font-size: 1.3rem;
+}
+
+.card-value {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.card-subtitle {
+  color: #aaaaaa;
+  font-size: 0.9rem;
+}
+
+/* USB Device List */
+.device-list {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 30px;
+}
+
+.device-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.device-title {
+  color: var(--primary-color);
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.device-title i {
+  margin-right: 10px;
+}
+
+.device-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.device-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.device-table th {
+  text-align: left;
+  padding: 12px 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--primary-color);
+  font-weight: bold;
+  border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+}
+
+.device-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.device-table tr:hover {
+  background-color: rgba(0, 255, 0, 0.05);
+}
+
+.device-status {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-connected {
+  background-color: rgba(0, 255, 0, 0.2);
+  color: #00ff00;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.status-disconnected {
+  background-color: rgba(255, 0, 0, 0.2);
+  color: #ff3e3e;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.status-warning {
+  background-color: rgba(255, 165, 0, 0.2);
+  color: #ffa500;
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn i {
+  margin-right: 8px;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.7s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.button-container {
+  margin: 20px 0;
+}
+
+.btn-primary {
+  background-color: rgba(0, 255, 0, 0.2);
+  color: var(--primary-color);
+  border: 1px solid rgba(0, 255, 0, 0.5);
+}
+
+.btn-primary:hover {
+  background-color: rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+}
+
+.btn-danger {
+  background-color: rgba(255, 0, 0, 0.2);
+  color: var(--accent-color);
+  border: 1px solid rgba(255, 0, 0, 0.5);
+}
+
+.btn-danger:hover {
+  background-color: rgba(255, 0, 0, 0.3);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+}
+
+.btn-secondary {
+  background-color: rgba(0, 191, 255, 0.2);
+  color: #00bfff;
+  border: 1px solid rgba(0, 191, 255, 0.5);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(0, 191, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+}
+
+/* Scan Results */
+.scan-results {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 30px;
+}
+
+.result-item {
+  padding: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.result-title {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.result-time {
+  color: #aaaaaa;
+  font-size: 0.9rem;
+}
+
+.result-details {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.result-file {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.result-file:last-child {
+  border-bottom: none;
+}
+
+.file-path {
+  color: #cccccc;
+}
+
+.file-threat {
+  color: var(--accent-color);
+}
+
+/* Alerts */
+.alert {
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.alert-danger {
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #ff3e3e;
+}
+
+.alert-warning {
+  background-color: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  color: #ffa500;
+}
+
+.alert-success {
+  background-color: rgba(0, 255, 0, 0.1);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  color: #00ff00;
+}
+
+.alert-info {
+  background-color: rgba(0, 191, 255, 0.1);
+  border: 1px solid rgba(0, 191, 255, 0.3);
+  color: #00bfff;
+}
+
+/* Settings Form */
+.settings-form {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.form-check-input {
+  margin-right: 10px;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+}
+
+.form-check-input:checked {
+  background-color: rgba(0, 255, 0, 0.2);
+  border-color: var(--primary-color);
+}
+
+.form-check-input:checked::before {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--primary-color);
+  font-size: 12px;
+}
+
+.form-check-label {
+  cursor: pointer;
+}
+
+/* Loader */
+.loader {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(0, 255, 0, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spin 1s linear infinite;
+}
+
+/* Typing Animation */
+.typing {
+  border-right: 2px solid var(--primary-color);
+  white-space: nowrap;
+  overflow: hidden;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  background-color: var(--terminal-bg);
+  border-left: 4px solid var(--primary-color);
+  color: var(--text-color);
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+  font-family: var(--font-mono);
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.notification-title {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.notification-close {
+  cursor: pointer;
+  color: #aaaaaa;
+}
+
+.notification-body {
+  margin-bottom: 10px;
+}
+
+.notification-progress {
+  height: 3px;
+  background-color: rgba(0, 255, 0, 0.3);
+  position: relative;
+}
+
+.notification-progress::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: var(--primary-color);
+  animation: progress 5s linear forwards;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0.4;
+  }
+}
+
+@keyframes moveNode {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(var(--move-x1, 20px), var(--move-y1, 15px));
+  }
+  50% {
+    transform: translate(var(--move-x2, -5px), var(--move-y2, 25px));
+  }
+  75% {
+    transform: translate(var(--move-x3, -15px), var(--move-y3, 5px));
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes scan {
+  0% {
+    top: 0;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+/* Vertical scanning removed as requested */
+
+@keyframes binary-fall {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink-caret {
+  from, to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: var(--primary-color);
+  }
+}
+
+@keyframes progress {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0;
+  }
+}
+
+/* JavaScript for creating network nodes and connections */
+/* This will be initialized by the accompanying JS file */
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .navbar {
+    flex-direction: column;
+  }
+
+  .navbar-links {
+    margin-top: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .device-table {
+    display: block;
+    overflow-x: auto;
+  }
+}

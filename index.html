@@ -1,13 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/usb-icon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>USB Log Monitoring and Intrusion Detection System</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Monitoring System</title>
+    <link rel="stylesheet" href="advanced-termux-theme.css">
+    <link rel="stylesheet" href="updated-styles.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #0f172a;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .loading-container {
+            text-align: center;
+            z-index: 10;
+        }
+
+        .logo {
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo svg {
+            width: 80px;
+            height: 80px;
+            stroke: #0f0;
+            margin-bottom: 20px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            margin-top: 20px;
+            color: #0f0;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 10px;
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background-color: #0f0;
+            width: 0%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        .terminal-window {
+            width: 600px;
+            max-width: 90%;
+            margin-top: 30px;
+            border: 1px solid #0f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .terminal-header {
+            background-color: rgba(0, 255, 0, 0.1);
+            padding: 10px;
+            border-bottom: 1px solid #0f0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .terminal-title {
+            color: #0f0;
+            font-weight: bold;
+        }
+
+        .terminal-content {
+            padding: 15px;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .terminal-line {
+            margin: 5px 0;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: typing 0.5s steps(30, end);
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        .binary-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="binary-rain" id="binary-rain"></div>
+    <div class="loading-container">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <div class="logo-text">USB Monitoring System</div>
+        </div>
+        
+        <div class="loading-bar">
+            <div class="loading-progress" id="loading-progress"></div>
+        </div>
+        
+        <div class="loading-text" id="loading-text">Initializing system...</div>
+        
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="terminal-title">System Boot</div>
+            </div>
+            <div class="terminal-content" id="terminal-content">
+                <div class="terminal-line">Initializing USB monitoring system...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const progress = document.getElementById('loading-progress');
+            const loadingText = document.getElementById('loading-text');
+            const terminalContent = document.getElementById('terminal-content');
+            const binaryRainContainer = document.getElementById('binary-rain');
+            
+            // Create binary rain effect
+            function createBinaryColumn() {
+                const column = document.createElement('div');
+                column.className = 'binary-column';
+                column.style.left = Math.random() * 100 + '%';
+                column.style.fontSize = Math.floor(Math.random() * 6 + 10) + 'px';
+                column.style.opacity = Math.random() * 0.5 + 0.2;
+                
+                let binaryString = '';
+                const length = Math.floor(Math.random() * 20 + 10);
+                for (let i = 0; i < length; i++) {
+                    binaryString += Math.random() > 0.5 ? '1' : '0';
+                    if (i < length - 1) binaryString += '<br>';
+                }
+                
+                column.innerHTML = binaryString;
+                
+                const duration = Math.random() * 10 + 5;
+                column.style.animationDuration = duration + 's';
+                
+                binaryRainContainer.appendChild(column);
+                
+                setTimeout(() => {
+                    column.remove();
+                }, duration * 1000);
+            }
+            
+            // Create initial columns
+            for (let i = 0; i < 20; i++) {
+                createBinaryColumn();
+            }
+            
+            // Continue creating columns at intervals
+            setInterval(createBinaryColumn, 500);
+            
+            // Boot sequence messages
+            const bootMessages = [
+                "Initializing USB monitoring system...",
+                "Loading device detection modules...",
+                "Initializing malware scanning engine...",
+                "Loading signature database...",
+                "Configuring real-time monitoring...",
+                "Setting up notification system...",
+                "Initializing user interface...",
+                "Checking for connected devices...",
+                "System ready. Redirecting to dashboard..."
+            ];
+            
+            let currentMessage = 0;
+            let currentProgress = 0;
+            
+            // Update progress bar and terminal messages
+            function updateProgress() {
+                if (currentProgress < 100) {
+                    currentProgress += Math.floor(Math.random() * 10) + 5;
+                    if (currentProgress > 100) currentProgress = 100;
+                    
+                    progress.style.width = currentProgress + '%';
+                    
+                    if (currentProgress > currentMessage * (100 / bootMessages.length) && currentMessage < bootMessages.length) {
+                        const newLine = document.createElement('div');
+                        newLine.className = 'terminal-line';
+                        newLine.textContent = bootMessages[currentMessage];
+                        terminalContent.appendChild(newLine);
+                        currentMessage++;
+                        
+                        // Auto-scroll terminal
+                        terminalContent.scrollTop = terminalContent.scrollHeight;
+                    }
+                    
+                    loadingText.textContent = `Loading... ${currentProgress}%`;
+                    
+                    if (currentProgress < 100) {
+                        setTimeout(updateProgress, Math.floor(Math.random() * 300) + 200);
+                    } else {
+                        loadingText.textContent = "System ready!";
+                        setTimeout(() => {
+                            window.location.href = "dashboard.html";
+                        }, 1500);
+                    }
+                }
+            }
+            
+            // Start the boot sequence
+            setTimeout(updateProgress, 500);
+        });
+    </script>
+    <script src="ethical-hacking-effects.js"></script>
+    <script src="termux-notifications.js"></script>
+    <script src="advanced-termux-animations.js"></script>
+    <script src="network-animations.js"></script>
+</body>
 </html>

@@ -1,258 +1,83 @@
-import os
-import sys
-import time
-import threading
-from datetime import datetime
-from dotenv import load_dotenv
+import subprocess
+import json
+import logging
+from flask import Flask, jsonify, send_from_directory
+from flask_cors import CORS
 
-# Load environment variables
-load_dotenv()
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("usb_monitor.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("usb_monitor")
 
-from backend.app import app, socketio
-from backend.models.db import db
-from backend.models.device import USBDevice, PermissionLevel
-from backend.models.alert import Alert
-from backend.models.settings import UserSettings
-from backend.models.scan import ScanResult
-from backend.utils.usb_detector import get_connected_devices
-from backend.utils.notification import send_connection_notification
-from backend.utils.scanner import scan_device
+# Initialize Flask app
+app = Flask(__name__, static_folder='.')
+CORS(app)  # Enable CORS for all routes
 
-class USBMonitor:
-    def __init__(self, app):
-        self.app = app
-        self.running = False
-        self.thread = None
-        self.last_devices = {}
-
-    def start(self):
-        """Start the USB monitoring thread"""
-        if self.running:
-            return
-
-        self.running = True
-        self.thread = threading.Thread(target=self._monitor_loop)
-        self.thread.daemon = True
-        self.thread.start()
-
-        print("USB monitoring started")
-
-    def stop(self):
-        """Stop the USB monitoring thread"""
-        self.running = False
-        if self.thread:
-            self.thread.join(timeout=1.0)
-            self.thread = None
-
-        print("USB monitoring stopped")
-
-    def _monitor_loop(self):
-        """Main monitoring loop"""
-        while self.running:
-            try:
-                with self.app.app_context():
-                    self._check_devices()
-            except Exception as e:
-                print(f"Error in USB monitor: {e}")
-
-            # Sleep for a short time before checking again
-            time.sleep(2)
-
-    def _check_devices(self):
-        """Check for USB device changes"""
-        # Get currently connected devices
-        current_devices = get_connected_devices()
-
-        # Check for new devices
-        for device_id, device_info in current_devices.items():
-            if device_id not in self.last_devices:
-                self._handle_new_device(device_id, device_info)
-
-        # Check for disconnected devices
-        for device_id in list(self.last_devices.keys()):
-            if device_id not in current_devices:
-                self._handle_disconnected_device(device_id)
-
-        # Update last devices
-        self.last_devices = current_devices
-
-    def _handle_new_device(self, device_id, device_info):
-        """Handle a newly connected USB device"""
-        # Check if device already exists in database
-        device = USBDevice.query.filter_by(device_id=device_id).first()
-
-        if device:
-            # Update existing device
-            device.is_connected = True
-            device.last_connected_at = datetime.utcnow()
-            if not device.mount_point and 'mount_point' in device_info:
-                device.mount_point = device_info['mount_point']
-
-            alert_type = "reconnection"
-            message = f"USB device reconnected: {device.product_name or 'Unknown Device'}"
-        else:
-            # Create new device with read-only permission by default
-            device = USBDevice(
-                device_id=device_id,
-                vendor_id=device_info.get('vendor_id'),
-                product_id=device_info.get('product_id'),
-                manufacturer=device_info.get('manufacturer'),
-                product_name=device_info.get('product_name'),
-                serial_number=device_info.get('serial_number'),
-                mount_point=device_info.get('mount_point'),
-                is_connected=True,
-                is_permitted=True  # Allow read-only access by default
-            )
-            # Set the property values
-            device.has_threats = False
-            db.session.add(device)
-            # Commit to get the device ID
-            db.session.commit()
-
-            alert_type = "new_connection"
-            message = f"New USB device connected: {device_info.get('product_name', 'Unknown Device')}. Set to read-only mode."
-
-        # Create an alert
-        alert = Alert(
-            device_id=device.id,
-            alert_type=alert_type,
-            message=message,
-            severity="warning"
-        )
-        db.session.add(alert)
-        db.session.commit()
-
-        # Send notification
-        send_connection_notification(device, alert_type)
-
-        # Emit socket event
-        socketio.emit('usb_connected', {
-            'device': device.to_dict(),
-            'alert': alert.to_dict()
-        })
-
-        # Auto-scan if enabled
-        settings = UserSettings.query.first()
-        if settings and settings.auto_scan and device.is_permitted and device.mount_point:
-            self._auto_scan_device(device)
-
-    def _handle_disconnected_device(self, device_id):
-        """Handle a disconnected USB device"""
-        device = USBDevice.query.filter_by(device_id=device_id).first()
-
-        if device:
-            device.is_connected = False
-            device.last_disconnected_at = datetime.utcnow()
-
-            # Create an alert
-            alert = Alert(
-                device_id=device.id,
-                alert_type="disconnection",
-                message=f"USB device disconnected: {device.product_name or 'Unknown Device'}",
-                severity="info"
-            )
-            db.session.add(alert)
-            db.session.commit()
-
-            # Emit socket event
-            socketio.emit('usb_disconnected', {
-                'device': device.to_dict(),
-                'alert': alert.to_dict()
-            })
-
-    def _auto_scan_device(self, device):
-        """Automatically scan a USB device"""
-        try:
-            # Create a new scan result
-            scan_result = ScanResult(
-                device_id=device.id,
-                status='in_progress',
-                scan_date=datetime.utcnow()
-            )
-            db.session.add(scan_result)
-            db.session.commit()
-
-            # Emit socket event for scan start
-            socketio.emit('scan_started', {
-                'device': device.to_dict(),
-                'scan': scan_result.to_dict()
-            })
-
-            # Start the scan in a background thread
-            threading.Thread(
-                target=self._perform_scan,
-                args=(device, scan_result)
-            ).start()
-
-        except Exception as e:
-            print(f"Error starting auto-scan: {e}")
-
-    def _perform_scan(self, device, scan_result):
-        """Perform the actual scan in a background thread"""
-        try:
-            with self.app.app_context():
-                start_time = time.time()
-
-                # Perform the scan
-                scan_results = scan_device(device.mount_point)
-
-                # Update scan result
-                scan_result.status = 'completed'
-                scan_result.total_files = scan_results['total_files']
-                scan_result.scanned_files = scan_results['scanned_files']
-                scan_result.infected_files = len(scan_results['infected_files'])
-                scan_result.suspicious_files = len(scan_results['suspicious_files'])
-                scan_result.scan_duration = time.time() - start_time
-
-                # Process results and create alerts if needed
-                from backend.app import process_scan_results
-                process_scan_results(device, scan_result, scan_results)
-
-                # Emit socket event for scan completion
-                socketio.emit('scan_completed', {
-                    'device': device.to_dict(),
-                    'scan': scan_result.to_dict()
-                })
-
-        except Exception as e:
-            with self.app.app_context():
-                # Handle scan errors
-                scan_result.status = 'error'
-                scan_result.scan_duration = time.time() - start_time
-
-                alert = Alert(
-                    device_id=device.id,
-                    scan_id=scan_result.id,
-                    alert_type="scan_error",
-                    message=f"Error scanning device {device.product_name}: {str(e)}",
-                    severity="warning"
-                )
-                db.session.add(alert)
-                db.session.commit()
-
-                # Emit socket event for scan error
-                socketio.emit('scan_error', {
-                    'device': device.to_dict(),
-                    'scan': scan_result.to_dict(),
-                    'error': str(e)
-                })
-
-# Create and start the USB monitor
-monitor = USBMonitor(app)
-
-def start_monitor():
-    """Start the USB monitor"""
-    monitor.start()
-
-def stop_monitor():
-    """Stop the USB monitor"""
-    monitor.stop()
-
-if __name__ == "__main__":
-    start_monitor()
+# Windows-specific USB detection
+def get_windows_usb_devices():
+    devices = []
     try:
-        # Keep the script running
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        stop_monitor()
+        # Use PowerShell to get USB drive information
+        cmd = "Get-WmiObject Win32_DiskDrive | Where-Object {$_.InterfaceType -eq 'USB'} | ForEach-Object {$disk = $_; $partitions = Get-WmiObject -Query \"ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition\"; foreach($partition in $partitions) {$volumes = Get-WmiObject -Query \"ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition\"; foreach($volume in $volumes) {Write-Output \"$($disk.DeviceID)|$($disk.Model)|$($volume.DeviceID)|$($volume.VolumeName)|$($volume.Size)|$($volume.FreeSpace)\"}}} | ConvertTo-Json"
+        result = subprocess.run(["powershell", "-Command", cmd], capture_output=True, text=True)
+
+        if result.returncode == 0 and result.stdout.strip():
+            # Parse the output
+            lines = json.loads(result.stdout)
+            if isinstance(lines, str):  # Handle single device case
+                lines = [lines]
+
+            for line in lines:
+                parts = line.split('|')
+                if len(parts) >= 6:
+                    device_id = parts[0].replace('\\', '_').replace('.', '_')
+                    model = parts[1].strip()
+                    drive_letter = parts[2].strip()
+                    volume_name = parts[3].strip() if parts[3].strip() else "USB Drive"
+                    size_bytes = int(parts[4]) if parts[4].strip() else 0
+                    free_bytes = int(parts[5]) if parts[5].strip() else 0
+
+                    # Format size as GB with 2 decimal places
+                    size_gb = round(size_bytes / (1024**3), 2) if size_bytes else 0
+                    free_gb = round(free_bytes / (1024**3), 2) if free_bytes else 0
+                    used_gb = round(size_gb - free_gb, 2)
+
+                    # Create device entry
+                    devices.append({
+                        'device_id': device_id,
+                        'name': model,
+                        'vendor': model.split()[0] if ' ' in model else 'Unknown',
+                        'mount_point': drive_letter,
+                        'volume_name': volume_name,
+                        'capacity': f"{size_gb}GB",
+                        'used_space': f"{used_gb}GB",
+                        'free_space': f"{free_gb}GB",
+                        'status': 'connected'
+                    })
+
+        logger.info(f"Found {len(devices)} USB devices")
+    except Exception as e:
+        logger.error(f"Error getting USB devices: {str(e)}")
+
+    return devices
+
+# API routes
+@app.route('/')
+def index():
+    return send_from_directory('.', 'usb-scan-demo.html')
+
+@app.route('/api/devices', methods=['GET'])
+def get_devices():
+    devices = get_windows_usb_devices()
+    return jsonify(devices)
+
+# Main entry point
+if __name__ == '__main__':
+    logger.info("Starting USB Monitoring System")
+    app.run(host='0.0.0.0', port=5000, debug=True)

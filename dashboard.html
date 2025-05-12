@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Monitoring System - Dashboard</title>
+    <link rel="stylesheet" href="ethical-hacking-theme.css">
+    <link rel="stylesheet" href="termux-notifications.css">
+    <link rel="stylesheet" href="advanced-termux-theme.css">
+    <style>
+        :root {
+            --primary-50: #f0f9ff;
+            --primary-100: #e0f2fe;
+            --primary-200: #bae6fd;
+            --primary-300: #7dd3fc;
+            --primary-400: #38bdf8;
+            --primary-500: #0ea5e9;
+            --primary-600: #0284c7;
+            --primary-700: #0369a1;
+            --primary-800: #075985;
+            --primary-900: #0c4a6e;
+
+            --danger-500: #ef4444;
+            --warning-500: #f59e0b;
+            --success-500: #22c55e;
+
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-top: 60px; /* Add padding for fixed navbar */
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Dark mode (default) */
+        body.dark-mode {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        /* Light mode */
+        body.light-mode {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Navigation Bar Styles */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Dark mode navbar */
+        body.dark-mode .navbar {
+            background-color: #1e293b;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Light mode navbar */
+        body.light-mode .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        .navbar-logo svg {
+            margin-right: 10px;
+        }
+
+        .navbar-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .navbar-links li {
+            margin-left: 1.5rem;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        /* Dark mode navbar links */
+        body.dark-mode .navbar-links a {
+            color: #e2e8f0;
+        }
+
+        /* Light mode navbar links */
+        body.light-mode .navbar-links a {
+            color: #1e293b;
+        }
+
+        .navbar-links a:hover {
+            color: #38bdf8;
+        }
+
+        .navbar-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #38bdf8;
+            transition: width 0.3s ease;
+        }
+
+        .navbar-links a:hover::after {
+            width: 100%;
+        }
+
+        .navbar-links a.active {
+            color: #38bdf8;
+        }
+
+        .navbar-links a.active::after {
+            width: 100%;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            text-align: center;
+        }
+
+        header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+            width: 100%;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-400);
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Card styles */
+        .card {
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Dark mode card */
+        body.dark-mode .card {
+            background-color: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Light mode card */
+        body.light-mode .card {
+            background-color: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            margin: 0 auto;
+            max-width: 1000px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background-color: #334155;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 120px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray-400);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .device-list, .alert-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .device-item, .alert-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .device-item:last-child, .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .device-icon, .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .device-icon svg, .alert-icon svg {
+            width: 24px;
+            height: 24px;
+            color: #0f0;
+        }
+
+        .device-info, .alert-info {
+            flex: 1;
+            text-align: center;
+        }
+
+        .device-name, .alert-message {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .device-details, .alert-time {
+            font-size: 14px;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: var(--success-500);
+        }
+
+        .badge-danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger-500);
+        }
+
+        .badge-warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning-500);
+        }
+
+        .badge-primary {
+            background-color: rgba(14, 165, 233, 0.2);
+            color: var(--primary-400);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .button-primary {
+            background-color: var(--primary-600);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-700);
+        }
+
+        .button svg {
+            margin-right: 8px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-500);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger-500);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .slide-in-up {
+            animation: slideInUp 0.5s ease-out forwards;
+        }
+
+        /* Binary Code Rain Animation */
+        .binary-rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .binary-column {
+            position: absolute;
+            top: -20%;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-shadow: 0 0 5px #0f0;
+            white-space: nowrap;
+            opacity: 0.7;
+            animation: rain linear infinite;
+        }
+
+        @keyframes rain {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Animation delays */
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-300 {
+            animation-delay: 0.3s;
+        }
+
+        /* Particle Container */
+        .particle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 1) 70%);
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <!-- Binary Code Rain Animation -->
+    <div class="binary-rain-container" id="binary-rain"></div>
+    <div class="particle-container" id="particle-container"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                USB Security Monitor
+            </a>
+            <ul class="navbar-links" id="navbar-links">
+                <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="devices.html">Devices</a></li>
+                <li><a href="scans.html">Scans</a></li>
+                <li><a href="alerts.html">Alerts</a></li>
+                <li><a href="settings.html">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header class="fade-in">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                USB Monitoring System
+            </div>
+            <button id="refresh-button" class="button button-primary" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                </svg>
+                Refresh Data
+            </button>
+        </header>
+
+        <div id="error-container"></div>
+
+        <!-- Dashboard Content -->
+        <div class="grid slide-in-up delay-100">
+            <div class="stat-card">
+                <div class="stat-label">Connected Devices</div>
+                <div class="stat-value" id="connected-devices-count">2</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Devices</div>
+                <div class="stat-value" id="total-devices-count">2</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Scans</div>
+                <div class="stat-value" id="total-scans-count">2</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Detected Threats</div>
+                <div class="stat-value" id="total-threats-count">1</div>
+            </div>
+        </div>
+
+        <div class="card slide-in-up delay-200">
+            <div class="card-header">
+                <h2 class="card-title">Connected USB Devices</h2>
+            </div>
+            <div id="devices-container">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span>Connected USB Devices</span>
+                    </div>
+                    <div class="terminal-content">
+                        <ul class="device-list">
+                            <li class="device-item" data-device-id="USB_DEVICE_1">
+                                <div class="device-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="6" y="2" width="12" height="6" rx="2" />
+                                        <rect x="8" y="8" width="8" height="14" rx="1" />
+                                        <line x1="12" y1="14" x2="12" y2="16" />
+                                    </svg>
+                                </div>
+                                <div class="device-info">
+                                    <div class="device-name">Kingston DataTraveler 3.0</div>
+                                    <div class="device-details">Kingston | ID: USB_DEVICE_1 | Mount: E:</div>
+                                </div>
+                                <div class="device-status">
+                                    <span class="badge badge-primary">Read Only</span>
+                                </div>
+                            </li>
+                            <li class="device-item" data-device-id="USB_DEVICE_2">
+                                <div class="device-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="6" y="2" width="12" height="6" rx="2" />
+                                        <rect x="8" y="8" width="8" height="14" rx="1" />
+                                        <line x1="12" y1="14" x2="12" y2="16" />
+                                    </svg>
+                                </div>
+                                <div class="device-info">
+                                    <div class="device-name">SanDisk Ultra</div>
+                                    <div class="device-details">SanDisk | ID: USB_DEVICE_2 | Mount: F:</div>
+                                </div>
+                                <div class="device-status">
+                                    <span class="badge badge-danger">Blocked</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card slide-in-up delay-300">
+            <div class="card-header">
+                <h2 class="card-title">Recent Alerts</h2>
+            </div>
+            <div id="alerts-container">
+                <ul class="alert-list">
+                    <li class="alert-item">
+                        <div class="alert-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <div class="alert-info">
+                            <div class="alert-message">Suspicious files detected on device Removable Storage. Device set to read-only.</div>
+                            <div class="alert-time">25/4/2025, 2:37:32 pm</div>
+                        </div>
+                        <div class="alert-status">
+                            <span class="badge badge-warning">warning</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API URL
+        const API_URL = 'http://localhost:5000/api';
+
+        // Helper function to get badge class based on status
+        function getBadgeClass(status) {
+            switch (status) {
+                case 'read_only':
+                    return 'badge-primary';
+                case 'full_access':
+                    return 'badge-success';
+                case 'blocked':
+                    return 'badge-danger';
+                default:
+                    return 'badge-warning';
+            }
+        }
+
+        // Helper function to format status text
+        function formatStatus(status) {
+            switch (status) {
+                case 'read_only':
+                    return 'Read Only';
+                case 'full_access':
+                    return 'Full Access';
+                case 'blocked':
+                    return 'Blocked';
+                default:
+                    return 'Unknown';
+            }
+        }
+
+        // Initialize binary code rain animation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Binary rain animation
+            const binaryRainContainer = document.getElementById('binary-rain');
+
+            function createBinaryColumn() {
+                const column = document.createElement('div');
+                column.className = 'binary-column';
+                column.style.left = Math.random() * 100 + '%';
+                column.style.fontSize = Math.floor(Math.random() * 6 + 10) + 'px';
+                column.style.opacity = Math.random() * 0.5 + 0.2;
+
+                // Generate random binary string
+                let binaryString = '';
+                const length = Math.floor(Math.random() * 20 + 10);
+                for (let i = 0; i < length; i++) {
+                    binaryString += Math.random() > 0.5 ? '1' : '0';
+                    if (i < length - 1) binaryString += '<br>';
+                }
+
+                column.innerHTML = binaryString;
+
+                // Set animation duration
+                const duration = Math.random() * 10 + 5;
+                column.style.animationDuration = duration + 's';
+
+                binaryRainContainer.appendChild(column);
+
+                // Remove column after animation completes
+                setTimeout(() => {
+                    column.remove();
+                }, duration * 1000);
+            }
+
+            // Create initial columns
+            for (let i = 0; i < 20; i++) {
+                createBinaryColumn();
+            }
+
+            // Continue creating columns at intervals
+            setInterval(createBinaryColumn, 500);
+
+            // Initialize data
+            fetchDashboardData();
+
+            // Set up refresh interval
+            setInterval(fetchDashboardData, 5000);
+
+            // Handle refresh button click
+            document.getElementById('refresh-button').addEventListener('click', function() {
+                fetchDashboardData();
+            });
+        });
+
+        // Fetch dashboard data from API
+        async function fetchDashboardData() {
+            try {
+                // Show loading state
+                const devicesContainer = document.getElementById('devices-container');
+                const alertsContainer = document.getElementById('alerts-container');
+
+                devicesContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading USB devices...</div>
+                    </div>
+                `;
+
+                alertsContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading alerts...</div>
+                    </div>
+                `;
+
+                // Fetch devices
+                const devicesResponse = await fetch(`${API_URL}/devices`);
+                const devices = await devicesResponse.json();
+
+                // Fetch alerts
+                const alertsResponse = await fetch(`${API_URL}/alerts`);
+                const alerts = await alertsResponse.json();
+
+                // Fetch scans
+                const scansResponse = await fetch(`${API_URL}/scans`);
+                const scans = await scansResponse.json();
+
+                // Update dashboard stats
+                updateDashboardStats(devices, scans, alerts);
+
+                // Update connected devices display
+                updateConnectedDevices(devices);
+
+                // Update recent alerts display
+                updateRecentAlerts(alerts);
+
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                showError('Failed to connect to USB monitoring server. Please make sure the server is running.');
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats(devices, scans, alerts) {
+            const connectedDevices = devices.filter(device => device.is_connected);
+            const threats = scans.filter(scan => scan.infected_files > 0 || scan.suspicious_files > 0);
+
+            document.getElementById('connected-devices-count').textContent = connectedDevices.length;
+            document.getElementById('total-devices-count').textContent = devices.length;
+            document.getElementById('total-scans-count').textContent = scans.length;
+            document.getElementById('total-threats-count').textContent = threats.length;
+        }
+
+        // Update connected devices display
+        function updateConnectedDevices(devices) {
+            const devicesContainer = document.getElementById('devices-container');
+            const connectedDevices = devices.filter(device => device.is_connected);
+
+            if (connectedDevices.length === 0) {
+                devicesContainer.innerHTML = `
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <span>Connected USB Devices</span>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-icon-container">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="6" y="2" width="12" height="6" rx="2" />
+                                    <rect x="8" y="8" width="8" height="14" rx="1" />
+                                    <line x1="12" y1="14" x2="12" y2="16" />
+                                </svg>
+                            </div>
+                            <div class="terminal-line terminal-message-primary">
+                                No USB devices currently connected
+                            </div>
+                            <div class="terminal-line terminal-message-secondary">
+                                Connect a USB device to your computer to see it here
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            devicesContainer.innerHTML = `
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span>Connected USB Devices</span>
+                    </div>
+                    <div class="terminal-content">
+                        <ul class="device-list">
+                            ${connectedDevices.map(device => `
+                                <li class="device-item" data-device-id="${device.device_id}">
+                                    <div class="device-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="6" y="2" width="12" height="6" rx="2" />
+                                            <rect x="8" y="8" width="8" height="14" rx="1" />
+                                            <line x1="12" y1="14" x2="12" y2="16" />
+                                        </svg>
+                                    </div>
+                                    <div class="device-info">
+                                        <div class="device-name">${device.product_name}</div>
+                                        <div class="device-details">${device.manufacturer || 'Unknown'} | ID: ${device.device_id.substring(0, 10)}... | Mount: ${device.drive_letter || 'N/A'}</div>
+                                        <div class="device-details">Connected: ${device.last_connected}</div>
+                                    </div>
+                                    <div class="device-status">
+                                        <span class="badge ${getBadgeClass(device.status)}">${formatStatus(device.status)}</span>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update recent alerts display
+        function updateRecentAlerts(alerts) {
+            const alertsContainer = document.getElementById('alerts-container');
+
+            if (alerts.length === 0) {
+                alertsContainer.innerHTML = `
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <span>Recent Alerts</span>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-line terminal-message-primary">
+                                No recent alerts
+                            </div>
+                            <div class="terminal-line terminal-message-secondary">
+                                Alerts will appear here when USB devices are connected or scanned
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort alerts by timestamp (newest first)
+            const sortedAlerts = [...alerts].sort((a, b) => {
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+
+            // Take only the 5 most recent alerts
+            const recentAlerts = sortedAlerts.slice(0, 5);
+
+            alertsContainer.innerHTML = `
+                <ul class="alert-list">
+                    ${recentAlerts.map(alert => {
+                        let iconSvg = '';
+                        let badgeClass = '';
+
+                        // Determine icon based on alert type
+                        switch (alert.alert_type) {
+                            case 'new_connection':
+                            case 'reconnection':
+                                iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="6" y="2" width="12" height="6" rx="2" />
+                                    <rect x="8" y="8" width="8" height="14" rx="1" />
+                                    <line x1="12" y1="14" x2="12" y2="16" />
+                                </svg>`;
+                                badgeClass = 'badge-primary';
+                                break;
+                            case 'scan_result':
+                                iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12h2m18 0h-2M12 2v2m0 18v-2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"></path>
+                                </svg>`;
+
+                                // Determine badge class based on severity
+                                switch (alert.severity) {
+                                    case 'danger':
+                                        badgeClass = 'badge-danger';
+                                        break;
+                                    case 'warning':
+                                        badgeClass = 'badge-warning';
+                                        break;
+                                    default:
+                                        badgeClass = 'badge-success';
+                                }
+                                break;
+                            case 'disconnection':
+                                iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 6 6 18M6 6l12 12"></path>
+                                </svg>`;
+                                badgeClass = 'badge-warning';
+                                break;
+                            default:
+                                iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>`;
+                                badgeClass = 'badge-primary';
+                        }
+
+                        return `
+                            <li class="alert-item">
+                                <div class="alert-icon">
+                                    ${iconSvg}
+                                </div>
+                                <div class="alert-info">
+                                    <div class="alert-message">${alert.message}</div>
+                                    <div class="alert-time">${alert.timestamp}</div>
+                                </div>
+                                <div class="alert-status">
+                                    <span class="badge ${badgeClass}">${alert.severity}</span>
+                                </div>
+                            </li>
+                        `;
+                    }).join('')}
+                </ul>
+            `;
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+
+            errorContainer.innerHTML = `
+                <div class="error-message">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+
+            // Auto-hide error after 5 seconds
+            setTimeout(() => {
+                errorContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+    <script src="browser-usb-monitor.js"></script>
+    <script src="ethical-hacking-effects.js"></script>
+    <script src="termux-notifications.js"></script>
+    <script src="advanced-termux-animations.js"></script>
+    <script src="network-animations.js"></script>
+</body>
+</html>

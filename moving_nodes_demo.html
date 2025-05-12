@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Monitoring System - Moving Network Nodes Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="advanced_styles.css">
+    <style>
+        /* Additional styles for the demo */
+        .demo-container {
+            position: relative;
+            background-color: var(--terminal-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            height: 500px;
+            overflow: hidden;
+        }
+        
+        .demo-content {
+            position: relative;
+            z-index: 1;
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            text-align: center;
+            padding-top: 20px;
+        }
+        
+        .demo-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .demo-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation Container -->
+    <div class="background-animation"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <i class="fas fa-shield-alt"></i> USB Monitoring System
+        </div>
+        <div class="navbar-links">
+            <a href="#" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="#"><i class="fas fa-usb"></i> Devices</a>
+            <a href="#"><i class="fas fa-search"></i> Scans</a>
+            <a href="#"><i class="fas fa-exclamation-triangle"></i> Alerts</a>
+            <a href="#"><i class="fas fa-cog"></i> Settings</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Moving Network Nodes Demo</h1>
+        
+        <!-- Network Nodes Demo Container -->
+        <div class="demo-container">
+            <div class="demo-content">
+                <div class="demo-title">Dynamic Network Nodes</div>
+                <p>This demo shows the network nodes moving around in the background.</p>
+                <p>The nodes represent devices in the network, and the connections between them represent data flow.</p>
+                <p>Each node has a unique movement pattern, creating a dynamic and engaging background.</p>
+            </div>
+            
+            <!-- Demo background with network nodes -->
+            <div class="demo-background" id="demo-network"></div>
+        </div>
+        
+        <!-- Terminal Card Example -->
+        <div class="terminal-card">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <i class="fas fa-terminal"></i> Network Analysis
+                </div>
+                <div class="terminal-controls">
+                    <div class="terminal-control control-close"></div>
+                    <div class="terminal-control control-minimize"></div>
+                    <div class="terminal-control control-maximize"></div>
+                </div>
+            </div>
+            <div class="terminal-content">
+                <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span class="terminal-command">usb-monitor --network-analysis</span>
+                </div>
+                <div class="terminal-output typing">
+Analyzing network connections...
+[===>                   ] 15% Complete
+Scanning for connected devices...
+Mapping network topology...
+Analyzing data flow patterns...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Cards -->
+        <div class="dashboard-cards">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-network-wired"></i> Network Nodes
+                    </div>
+                </div>
+                <div class="card-value">15</div>
+                <div class="card-subtitle">Active network connections</div>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-exchange-alt"></i> Data Flow
+                    </div>
+                </div>
+                <div class="card-value">1.2 GB/s</div>
+                <div class="card-subtitle">Current network traffic</div>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-shield-alt"></i> Security Status
+                    </div>
+                </div>
+                <div class="card-value">Secure</div>
+                <div class="card-subtitle">No threats detected</div>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-line"></i> Network Health
+                    </div>
+                </div>
+                <div class="card-value">98%</div>
+                <div class="card-subtitle">Overall network performance</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="advanced_animations.js"></script>
+    <script src="network_animation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create network nodes in the demo container
+            const demoNetwork = document.getElementById('demo-network');
+            createNetworkNodes(demoNetwork);
+            
+            // Show a notification example
+            setTimeout(() => {
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('Network Nodes', 'Dynamic network nodes are now moving in the background', 'info');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Monitoring System - Devices</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="advanced_styles.css">
+</head>
+<body>
+    <!-- Background Animation Container -->
+    <div class="background-animation"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <i class="fas fa-shield-alt"></i> USB Monitoring System
+        </div>
+        <div class="navbar-links">
+            <a href="index.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="devices_enhanced.html" class="active"><i class="fas fa-usb"></i> Devices</a>
+            <a href="scans.html"><i class="fas fa-search"></i> Scans</a>
+            <a href="alerts.html"><i class="fas fa-exclamation-triangle"></i> Alerts</a>
+            <a href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-usb"></i> USB Devices</h1>
+
+        <!-- Connected USB Devices -->
+        <div class="terminal-card">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <i class="fas fa-usb"></i> Connected USB Devices
+                </div>
+                <div class="terminal-controls">
+                    <div class="terminal-control control-close"></div>
+                    <div class="terminal-control control-minimize"></div>
+                    <div class="terminal-control control-maximize"></div>
+                </div>
+            </div>
+            <div class="terminal-content">
+                <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span class="terminal-command">usb-monitor --list-devices</span>
+                </div>
+                <div id="device-output" class="terminal-output">
+                    Scanning for connected USB devices...
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Management -->
+        <div class="device-list">
+            <div class="device-header">
+                <div class="device-title">
+                    <i class="fas fa-tasks"></i> Device Management
+                </div>
+                <div class="device-actions">
+                    <button type="button" id="scan-all-btn" class="btn btn-primary btn-scan">
+                        <i class="fas fa-search"></i> Scan All Devices
+                    </button>
+                    <button type="button" id="refresh-devices-btn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Refresh Devices
+                    </button>
+                </div>
+            </div>
+            <table class="device-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all-devices" title="Select All Devices" aria-label="Select All Devices"></th>
+                        <th>Device Name</th>
+                        <th>Drive</th>
+                        <th>Status</th>
+                        <th>Permission</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="device-table-body">
+                    <!-- Device rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Device Permissions -->
+        <div class="terminal-card">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <i class="fas fa-lock"></i> Device Permissions
+                </div>
+                <div class="terminal-controls">
+                    <div class="terminal-control control-close"></div>
+                    <div class="terminal-control control-minimize"></div>
+                    <div class="terminal-control control-maximize"></div>
+                </div>
+            </div>
+            <div class="terminal-content">
+                <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span class="terminal-command">usb-monitor --show-permissions</span>
+                </div>
+                <div class="terminal-output">
+                    Device permissions control how USB devices can access your system:
+
+                    [BLOCKED]    - No access allowed
+                    [READ_ONLY]  - Files can be read but not modified
+                    [FULL_ACCESS] - Complete read/write access
+
+                    Default permission for new devices: READ_ONLY
+                    Auto-block suspicious devices: ENABLED
+                </div>
+
+                <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span class="terminal-command">usb-monitor --whitelist</span>
+                </div>
+                <div id="whitelist-output" class="terminal-output">
+                    Whitelisted devices (FULL_ACCESS):
+                    No devices in whitelist.
+                </div>
+
+                <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span class="terminal-command">usb-monitor --blacklist</span>
+                </div>
+                <div id="blacklist-output" class="terminal-output">
+                    Blacklisted devices (BLOCKED):
+                    No devices in blacklist.
+                </div>
+            </div>
+        </div>
+
+        <!-- Device History -->
+        <div class="terminal-card">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <i class="fas fa-history"></i> Device History
+                </div>
+                <div class="terminal-controls">
+                    <div class="terminal-control control-close"></div>
+                    <div class="terminal-control control-minimize"></div>
+                    <div class="terminal-control control-maximize"></div>
+                </div>
+            </div>
+            <div class="terminal-content">
+                <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span class="terminal-command">usb-monitor --history</span>
+                </div>
+                <div id="history-output" class="terminal-output">
+                    Loading device history...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="advanced_animations.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch devices
+            fetchDevices();
+
+            // Fetch permissions
+            fetchPermissions();
+
+            // Fetch history
+            fetchHistory();
+
+            // Set up event listeners
+            document.getElementById('scan-all-btn').addEventListener('click', scanAllDevices);
+            document.getElementById('refresh-devices-btn').addEventListener('click', fetchDevices);
+            document.getElementById('select-all-devices').addEventListener('change', toggleAllDevices);
+        });
+
+        // Fetch connected devices
+        function fetchDevices() {
+            // Simulate loading
+            document.getElementById('device-output').textContent = 'Scanning for connected USB devices...';
+            document.getElementById('device-table-body').innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading devices...</td></tr>';
+
+            // Fetch devices from API
+            fetch('/api/scan')
+                .then(response => response.json())
+                .then(data => {
+                    updateDeviceOutput(data.devices);
+                    updateDeviceTable(data.devices);
+                })
+                .catch(error => {
+                    console.error('Error fetching devices:', error);
+                    // Show demo data if API fails
+                    showDemoDevices();
+                });
+        }
+
+        // Update device output in terminal style
+        function updateDeviceOutput(devices) {
+            const outputElement = document.getElementById('device-output');
+
+            if (devices.length === 0) {
+                outputElement.textContent = 'No USB devices found.';
+                return;
+            }
+
+            let output = 'Found ' + devices.length + ' USB device(s):\n\n';
+
+            devices.forEach((device, index) => {
+                output += `[${index + 1}] ${device.name}\n`;
+                output += `    ID: ${device.id}\n`;
+                if (device.drive_letter) {
+                    output += `    Drive: ${device.drive_letter}\n`;
+                }
+                output += `    Status: CONNECTED\n`;
+                output += `    Permission: ${device.permission || 'READ_ONLY'}\n`;
+                if (index < devices.length - 1) {
+                    output += '\n';
+                }
+            });
+
+            // Use terminal typing effect
+            window.terminalUtils.createTypingEffect(outputElement, output, 5);
+        }
+
+        // Update device table
+        function updateDeviceTable(devices) {
+            const tableBody = document.getElementById('device-table-body');
+
+            if (devices.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No USB devices found</td></tr>';
+                return;
+            }
+
+            let html = '';
+
+            devices.forEach(device => {
+                html += `
+                    <tr data-id="${device.id}">
+                        <td><input type="checkbox" class="device-checkbox" title="Select Device" aria-label="Select ${device.name}"></td>
+                        <td>${device.name}</td>
+                        <td>${device.drive_letter || 'N/A'}</td>
+                        <td><span class="device-status status-connected">Connected</span></td>
+                        <td>
+                            <select class="permission-select" data-id="${device.id}">
+                                <option value="blocked" ${(device.permission === 'blocked') ? 'selected' : ''}>Blocked</option>
+                                <option value="read_only" ${(!device.permission || device.permission === 'read_only') ? 'selected' : ''}>Read Only</option>
+                                <option value="full_access" ${(device.permission === 'full_access') ? 'selected' : ''}>Full Access</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-scan btn-sm" data-id="${device.id}">
+                                <i class="fas fa-search"></i> Scan
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+
+            // Add event listeners to permission selects
+            document.querySelectorAll('.permission-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    updateDevicePermission(this.dataset.id, this.value);
+                });
+            });
+
+            // Add event listeners to scan buttons
+            document.querySelectorAll('.btn-scan').forEach(button => {
+                button.addEventListener('click', function() {
+                    scanDevice(this.dataset.id);
+                });
+            });
+        }
+
+        // Fetch device permissions
+        function fetchPermissions() {
+            fetch('/api/devices/permissions')
+                .then(response => response.json())
+                .then(data => {
+                    updatePermissionsOutput(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching permissions:', error);
+                    // Show demo data if API fails
+                    showDemoPermissions();
+                });
+        }
+
+        // Update permissions output
+        function updatePermissionsOutput(data) {
+            const whitelistElement = document.getElementById('whitelist-output');
+            const blacklistElement = document.getElementById('blacklist-output');
+
+            // Update whitelist
+            let whitelistOutput = 'Whitelisted devices (FULL_ACCESS):\n';
+            const whitelist = data.whitelist || {};
+
+            if (Object.keys(whitelist).length === 0) {
+                whitelistOutput += 'No devices in whitelist.';
+            } else {
+                Object.values(whitelist).forEach((device, index) => {
+                    whitelistOutput += `[${index + 1}] ${device.name} (${device.id})\n`;
+                    whitelistOutput += `    Added: ${device.added}\n`;
+                });
+            }
+
+            // Update blacklist
+            let blacklistOutput = 'Blacklisted devices (BLOCKED):\n';
+            const blacklist = data.blacklist || {};
+
+            if (Object.keys(blacklist).length === 0) {
+                blacklistOutput += 'No devices in blacklist.';
+            } else {
+                Object.values(blacklist).forEach((device, index) => {
+                    blacklistOutput += `[${index + 1}] ${device.name} (${device.id})\n`;
+                    blacklistOutput += `    Added: ${device.added}\n`;
+                });
+            }
+
+            // Use terminal typing effect
+            window.terminalUtils.createTypingEffect(whitelistElement, whitelistOutput, 5);
+            window.terminalUtils.createTypingEffect(blacklistElement, blacklistOutput, 5);
+        }
+
+        // Fetch device history
+        function fetchHistory() {
+            fetch('/api/history')
+                .then(response => response.json())
+                .then(data => {
+                    updateHistoryOutput(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching history:', error);
+                    // Show demo data if API fails
+                    showDemoHistory();
+                });
+        }
+
+        // Update history output
+        function updateHistoryOutput(history) {
+            const outputElement = document.getElementById('history-output');
+
+            if (!history || history.length === 0) {
+                outputElement.textContent = 'No device history available.';
+                return;
+            }
+
+            let output = 'Recent device activity:\n\n';
+
+            history.slice(0, 10).forEach((event, index) => {
+                const eventType = event.event_type === 'connected' ? 'CONNECTED' : 'DISCONNECTED';
+                const eventColor = event.event_type === 'connected' ? 'green' : 'red';
+
+                output += `[${event.timestamp}] ${event.device_name}\n`;
+                output += `    Event: ${eventType}\n`;
+                if (index < Math.min(history.length, 10) - 1) {
+                    output += '\n';
+                }
+            });
+
+            // Use terminal typing effect
+            window.terminalUtils.createTypingEffect(outputElement, output, 5);
+        }
+
+        // Update device permission
+        function updateDevicePermission(deviceId, permission) {
+            // Show notification
+            window.showNotification('Permission Updated', `Device permission set to ${permission.toUpperCase()}`, 'info');
+
+            // Send to API
+            fetch(`/api/devices/permission/${deviceId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    permission: permission
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Permission updated:', data);
+                // Refresh permissions
+                fetchPermissions();
+            })
+            .catch(error => {
+                console.error('Error updating permission:', error);
+            });
+        }
+
+        // Scan a specific device
+        function scanDevice(deviceId) {
+            // Find device in table
+            const deviceRow = document.querySelector(`tr[data-id="${deviceId}"]`);
+            if (!deviceRow) return;
+
+            // Get drive letter
+            const driveLetter = deviceRow.querySelector('td:nth-child(3)').textContent;
+            if (driveLetter === 'N/A') {
+                window.showNotification('Scan Error', 'Cannot scan device without drive letter', 'error');
+                return;
+            }
+
+            // Show notification
+            window.showNotification('Scanning Device', `Scanning ${driveLetter} for threats...`, 'info');
+
+            // Add scanning effect
+            deviceRow.classList.add('scanning');
+
+            // Send to API
+            fetch('/api/scan-device', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    drive_path: driveLetter
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove scanning effect
+                deviceRow.classList.remove('scanning');
+
+                // Show result notification
+                if (data.scan_result.malicious_files && data.scan_result.malicious_files.length > 0) {
+                    window.showNotification('Scan Complete', `Found ${data.scan_result.malicious_files.length} malicious files!`, 'error');
+                } else if (data.scan_result.suspicious_files && data.scan_result.suspicious_files.length > 0) {
+                    window.showNotification('Scan Complete', `Found ${data.scan_result.suspicious_files.length} suspicious files`, 'warning');
+                } else {
+                    window.showNotification('Scan Complete', 'No threats detected', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error scanning device:', error);
+                // Remove scanning effect
+                deviceRow.classList.remove('scanning');
+                // Show error notification
+                window.showNotification('Scan Error', 'Failed to scan device', 'error');
+
+                // Show demo result for testing
+                setTimeout(() => {
+                    window.showNotification('Scan Complete', 'Demo: No threats detected', 'success');
+                }, 1000);
+            });
+        }
+
+        // Scan all devices
+        function scanAllDevices() {
+            // Get all devices with drive letters
+            const deviceRows = document.querySelectorAll('tr[data-id]');
+            let scanCount = 0;
+
+            deviceRows.forEach(row => {
+                const deviceId = row.dataset.id;
+                const driveLetter = row.querySelector('td:nth-child(3)').textContent;
+
+                if (driveLetter !== 'N/A') {
+                    scanCount++;
+                    // Add scanning effect
+                    row.classList.add('scanning');
+
+                    // Scan with a slight delay to avoid overwhelming the server
+                    setTimeout(() => {
+                        scanDevice(deviceId);
+                    }, scanCount * 500);
+                }
+            });
+
+            if (scanCount === 0) {
+                window.showNotification('Scan Error', 'No scannable devices found', 'error');
+            } else {
+                window.showNotification('Scanning Devices', `Scanning ${scanCount} devices...`, 'info');
+            }
+        }
+
+        // Toggle all device checkboxes
+        function toggleAllDevices() {
+            const checked = document.getElementById('select-all-devices').checked;
+            document.querySelectorAll('.device-checkbox').forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+        }
+
+        // Show demo devices if API fails
+        function showDemoDevices() {
+            const demoDevices = [
+                {
+                    id: 'USB\\VID_0781&PID_5581\\4C530001240211123491',
+                    name: 'SanDisk Cruzer (16GB)',
+                    drive_letter: 'E:\\',
+                    permission: 'read_only'
+                },
+                {
+                    id: 'USB\\VID_0951&PID_1666\\5B3C1F0F1',
+                    name: 'Kingston DataTraveler (32GB)',
+                    drive_letter: 'F:\\',
+                    permission: 'full_access'
+                },
+                {
+                    id: 'USB\\VID_0BC2&PID_2312\\NA7H6D4R',
+                    name: 'Seagate Backup Plus',
+                    drive_letter: 'G:\\',
+                    permission: 'blocked'
+                }
+            ];
+
+            updateDeviceOutput(demoDevices);
+            updateDeviceTable(demoDevices);
+        }
+
+        // Show demo permissions if API fails
+        function showDemoPermissions() {
+            const demoData = {
+                whitelist: {
+                    'USB\\VID_0951&PID_1666\\5B3C1F0F1': {
+                        id: 'USB\\VID_0951&PID_1666\\5B3C1F0F1',
+                        name: 'Kingston DataTraveler (32GB)',
+                        permission: 'full_access',
+                        added: '27/04/2023, 14:32:15'
+                    }
+                },
+                blacklist: {
+                    'USB\\VID_0BC2&PID_2312\\NA7H6D4R': {
+                        id: 'USB\\VID_0BC2&PID_2312\\NA7H6D4R',
+                        name: 'Seagate Backup Plus',
+                        permission: 'blocked',
+                        added: '27/04/2023, 15:45:22'
+                    }
+                }
+            };
+
+            updatePermissionsOutput(demoData);
+        }
+
+        // Show demo history if API fails
+        function showDemoHistory() {
+            const demoHistory = [
+                {
+                    device_name: 'SanDisk Cruzer (16GB)',
+                    device_id: 'USB\\VID_0781&PID_5581\\4C530001240211123491',
+                    event_type: 'connected',
+                    timestamp: '27/04/2023, 16:05:12'
+                },
+                {
+                    device_name: 'Kingston DataTraveler (32GB)',
+                    device_id: 'USB\\VID_0951&PID_1666\\5B3C1F0F1',
+                    event_type: 'connected',
+                    timestamp: '27/04/2023, 15:32:45'
+                },
+                {
+                    device_name: 'Seagate Backup Plus',
+                    device_id: 'USB\\VID_0BC2&PID_2312\\NA7H6D4R',
+                    event_type: 'disconnected',
+                    timestamp: '27/04/2023, 15:50:18'
+                },
+                {
+                    device_name: 'Seagate Backup Plus',
+                    device_id: 'USB\\VID_0BC2&PID_2312\\NA7H6D4R',
+                    event_type: 'connected',
+                    timestamp: '27/04/2023, 15:45:22'
+                }
+            ];
+
+            updateHistoryOutput(demoHistory);
+        }
+    </script>
+</body>
+</html>

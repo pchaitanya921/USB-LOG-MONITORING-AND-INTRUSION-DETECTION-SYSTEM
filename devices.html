@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Monitoring System - Devices</title>
+    <link rel="stylesheet" href="advanced-termux-theme.css">
+    <link rel="stylesheet" href="updated-styles.css">
+</head>
+<body class="dark-mode">
+    <div id="cybersecurity-background"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                USB Monitoring System
+            </a>
+            <button id="navbar-toggle" class="navbar-toggle" type="button" title="Toggle navigation menu" aria-label="Toggle navigation menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <ul class="navbar-links" id="navbar-links">
+                <li><a href="real_dashboard.html">Dashboard</a></li>
+                <li><a href="devices.html" class="active">Devices</a></li>
+                <li><a href="scans.html">Scans</a></li>
+                <li><a href="alerts.html">Alerts</a></li>
+                <li><a href="settings.html">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>USB Devices</h1>
+            <button id="refresh-button" class="button button-primary" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                </svg>
+                Refresh Data
+            </button>
+        </header>
+
+        <div id="error-container"></div>
+
+        <!-- Connected USB Devices -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title usb-devices-title">Connected USB Devices</h2>
+            </div>
+            <div id="devices-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Loading devices...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Management -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Device Management</h2>
+            </div>
+            <div id="device-management-container">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span>Device Management</span>
+                    </div>
+                    <div class="terminal-content">
+                        <div class="terminal-line terminal-message-primary">
+                            Select a device from the Connected USB Devices list to manage it
+                        </div>
+                        <div class="terminal-line terminal-message-secondary">
+                            You can change permissions, view details, or block devices
+                        </div>
+                        <div class="device-management-actions">
+                            <button type="button" id="scan-all-devices" class="button button-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12a10 10 0 1 0 20 0 10 10 0 1 0-20 0z"></path>
+                                    <path d="M12 16v-4"></path>
+                                    <path d="M12 8h.01"></path>
+                                </svg>
+                                Scan All Devices
+                            </button>
+                            <button type="button" id="refresh-devices-btn" class="button button-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 2v6h-6"></path>
+                                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                                    <path d="M3 22v-6h6"></path>
+                                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                                </svg>
+                                Refresh Devices
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device History -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Device History</h2>
+            </div>
+            <div id="device-history-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Loading device history...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for device details -->
+    <div id="device-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="device-modal-title">Device Details</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div id="device-modal-content" class="modal-body">
+                <!-- Device details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API base URL
+        const API_URL = 'http://localhost:5000/api';
+
+        // Use scan endpoint for devices since it returns real connected devices
+        const DEVICES_ENDPOINT = 'scan';
+
+        // Disable dummy data - only show real connected devices
+        const ENABLE_DUMMY_DATA = false; // Set to false to only show real connected devices
+
+        // Add a notice about demo data
+        let usingDummyData = false;
+
+        // DOM Elements
+        const refreshButton = document.getElementById('refresh-button');
+        const devicesContainer = document.getElementById('devices-container');
+        const deviceHistoryContainer = document.getElementById('device-history-container');
+        const errorContainer = document.getElementById('error-container');
+
+        // Fetch data from API with fallback to dummy data
+        async function fetchData(endpoint) {
+            try {
+                // Use the scan endpoint for devices
+                const actualEndpoint = endpoint === 'devices' ? DEVICES_ENDPOINT : endpoint;
+                const response = await fetch(`${API_URL}/${actualEndpoint}`);
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // If we're fetching devices from the scan endpoint, extract the devices array
+                if (endpoint === 'devices' && actualEndpoint === 'scan') {
+                    return data.devices || [];
+                }
+
+                return data;
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+
+                // Show error message only if dummy data is not enabled
+                if (!ENABLE_DUMMY_DATA) {
+                    showError(`Failed to connect to the API. ${error.message}`);
+                    return null;
+                }
+
+                // Use dummy data as fallback
+                usingDummyData = true;
+                return getDummyData(endpoint);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            errorContainer.innerHTML = `
+                <div class="error-message">
+                    ${message}
+                </div>
+            `;
+        }
+
+        // Get dummy data for demonstration
+        function getDummyData(endpoint) {
+            if (endpoint === 'devices') {
+                return [
+                    {
+                        device_id: 'USB_DEVICE_1',
+                        product_name: 'Kingston DataTraveler 3.0',
+                        manufacturer: 'Kingston',
+                        serial_number: 'KT12345678',
+                        mount_point: 'E:',
+                        is_connected: true,
+                        last_connected: '2023-06-15T10:30:45',
+                        status: 'read_only',
+                        capacity: '16GB',
+                        used_space: '4.2GB',
+                        free_space: '11.8GB'
+                    },
+                    {
+                        device_id: 'USB_DEVICE_2',
+                        product_name: 'SanDisk Ultra',
+                        manufacturer: 'SanDisk',
+                        serial_number: 'SDCZ48-032G',
+                        mount_point: 'F:',
+                        is_connected: true,
+                        last_connected: '2023-06-14T15:22:10',
+                        status: 'blocked',
+                        capacity: '32GB',
+                        used_space: '12.7GB',
+                        free_space: '19.3GB'
+                    },
+                    {
+                        device_id: 'USB_DEVICE_3',
+                        product_name: 'Seagate Backup Plus',
+                        manufacturer: 'Seagate',
+                        serial_number: 'NA7PPDZ5',
+                        mount_point: 'G:',
+                        is_connected: true,
+                        last_connected: '2023-06-10T09:15:30',
+                        status: 'full_access',
+                        capacity: '1TB',
+                        used_space: '450GB',
+                        free_space: '550GB'
+                    }
+                ];
+            }
+            return [];
+        }
+
+        // Load device history
+        async function loadDeviceHistory() {
+            try {
+                const devices = await fetchData('devices');
+
+                if (devices && devices.length > 0) {
+                    // Sort devices by last connected date (newest first)
+                    const sortedDevices = [...devices].sort((a, b) =>
+                        new Date(b.last_connected_at || b.last_connected) -
+                        new Date(a.last_connected_at || a.last_connected)
+                    );
+
+                    const deviceHistoryContainer = document.getElementById('device-history-container');
+
+                    deviceHistoryContainer.innerHTML = `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Manufacturer</th>
+                                    <th>First Connected</th>
+                                    <th>Last Connected</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sortedDevices.map(device => `
+                                    <tr class="device-row" data-device-id="${device.device_id}">
+                                        <td>${device.product_name}</td>
+                                        <td>${device.manufacturer}</td>
+                                        <td>${formatDate(device.first_connected_at)}</td>
+                                        <td>${formatDate(device.last_connected_at || device.last_connected)}</td>
+                                        <td>
+                                            <span class="badge ${getStatusBadgeClass(device.permission_status || device.status)}">${formatStatus(device.permission_status || device.status)}</span>
+                                            ${!device.is_connected ? '<span class="badge badge-danger">Offline</span>' : ''}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+
+                    // Add click event listeners to device rows
+                    document.querySelectorAll('.device-row').forEach(row => {
+                        row.addEventListener('click', () => {
+                            const deviceId = row.getAttribute('data-device-id');
+                            showDeviceDetails(deviceId);
+                        });
+                    });
+                } else {
+                    // No devices found
+                    document.getElementById('device-history-container').innerHTML = `
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span>Device History</span>
+                            </div>
+                            <div class="terminal-content">
+                                <div class="terminal-icon-container">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="6" y="2" width="12" height="6" rx="2" />
+                                        <rect x="8" y="8" width="8" height="14" rx="1" />
+                                        <line x1="12" y1="14" x2="12" y2="16" />
+                                    </svg>
+                                </div>
+                                <div class="terminal-line terminal-message-primary">
+                                    No device history available
+                                </div>
+                                <div class="terminal-line terminal-message-secondary">
+                                    Connect a USB device to start building history
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading device history:', error);
+                document.getElementById('device-history-container').innerHTML = `
+                    <div class="error-message">
+                        Failed to load device history. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        // Load connected devices
+        async function loadConnectedDevices() {
+            try {
+                // Check if any real USB devices are connected
+                let devices = await fetchData('devices');
+                let connectedDevices = [];
+
+                if (devices && devices.length > 0) {
+                    // Filter out dummy devices and only include connected devices
+                    // Note: Some devices might not have is_connected property, so we assume they're connected
+                    connectedDevices = devices.filter(device =>
+                        device.is_connected === true || device.is_connected === undefined
+                    );
+                }
+
+                if (connectedDevices.length > 0) {
+                    // Display connected devices
+                    devicesContainer.innerHTML = `
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span>Connected USB Devices</span>
+                            </div>
+                            <div class="terminal-content">
+                                <ul class="device-list">
+                                    ${connectedDevices.map(device => `
+                                        <li class="device-item" data-device-id="${device.device_id}">
+                                            <div class="device-checkbox">
+                                                <input type="checkbox" id="device-${device.device_id}" class="device-select-checkbox">
+                                                <label for="device-${device.device_id}"></label>
+                                            </div>
+                                            <div class="device-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <rect x="6" y="2" width="12" height="6" rx="2" />
+                                                    <rect x="8" y="8" width="8" height="14" rx="1" />
+                                                    <line x1="12" y1="14" x2="12" y2="16" />
+                                                </svg>
+                                            </div>
+                                            <div class="device-info">
+                                                <div class="device-name">${device.product_name}</div>
+                                                <div class="device-details">${device.manufacturer} | ID: ${device.device_id} | Mount: ${device.mount_point}</div>
+                                            </div>
+                                            <div class="device-actions">
+                                                <button type="button" class="button button-small scan-device-btn" data-device-id="${device.device_id}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M2 12a10 10 0 1 0 20 0 10 10 0 1 0-20 0z"></path>
+                                                        <path d="M12 16v-4"></path>
+                                                        <path d="M12 8h.01"></path>
+                                                    </svg>
+                                                    Scan
+                                                </button>
+                                                <button type="button" class="button button-small realtime-scan-btn" data-device-id="${device.device_id}" data-device-name="${device.product_name}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                                    </svg>
+                                                    Real-time
+                                                </button>
+                                            </div>
+                                            <div class="device-status">
+                                                <span class="badge ${getStatusBadgeClass(device.status)}">${formatStatus(device.status)}</span>
+                                            </div>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // No connected devices
+                    devicesContainer.innerHTML = `
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span>Connected USB Devices</span>
+                            </div>
+                            <div class="terminal-content">
+                                <div class="terminal-icon-container">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="6" y="2" width="12" height="6" rx="2" />
+                                        <rect x="8" y="8" width="8" height="14" rx="1" />
+                                        <line x1="12" y1="14" x2="12" y2="16" />
+                                    </svg>
+                                </div>
+                                <div class="terminal-line terminal-message-primary">
+                                    No USB devices currently connected
+                                </div>
+                                <div class="terminal-line terminal-message-secondary">
+                                    Connect a USB device to your computer to see it here
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Add click event listeners to device items
+                document.querySelectorAll('.device-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const deviceId = item.getAttribute('data-device-id');
+                        showDeviceDetails(deviceId);
+                    });
+                });
+
+            } catch (error) {
+                console.error('Error loading connected devices:', error);
+                devicesContainer.innerHTML = `
+                    <div class="error-message">
+                        Failed to load connected devices. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        // Show device details in modal
+        function showDeviceDetails(deviceId) {
+            const modal = document.getElementById('device-modal');
+            const modalTitle = document.getElementById('device-modal-title');
+            const modalContent = document.getElementById('device-modal-content');
+
+            // Find the device in the data
+            fetchData('devices').then(devices => {
+                const device = devices.find(d => d.device_id === deviceId);
+
+                if (device) {
+                    modalTitle.textContent = device.product_name;
+
+                    modalContent.innerHTML = `
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span>Device Details</span>
+                            </div>
+                            <div class="terminal-content">
+                                <table class="device-details-table">
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Value</th>
+                                    </tr>
+                                    <tr>
+                                        <td>Manufacturer</td>
+                                        <td>${device.manufacturer}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Serial Number</td>
+                                        <td>${device.serial_number}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Device ID</td>
+                                        <td>${device.device_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mount Point</td>
+                                        <td>${device.mount_point || 'Not mounted'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Status</td>
+                                        <td>
+                                            <span class="badge ${getStatusBadgeClass(device.status)}">${formatStatus(device.status)}</span>
+                                            ${!device.is_connected ? '<span class="badge badge-danger">Offline</span>' : ''}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Last Connected</td>
+                                        <td>${formatDate(device.last_connected)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Capacity</td>
+                                        <td>${device.capacity}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Used Space</td>
+                                        <td>${device.used_space}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Free Space</td>
+                                        <td>${device.free_space}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="device-actions">
+                            <button class="button button-primary change-permission" data-device-id="${device.device_id}" data-permission="read_only">
+                                Set Read Only
+                            </button>
+                            <button class="button button-primary change-permission" data-device-id="${device.device_id}" data-permission="full_access">
+                                Set Full Access
+                            </button>
+                            <button class="button button-danger change-permission" data-device-id="${device.device_id}" data-permission="blocked">
+                                Block Device
+                            </button>
+                        </div>
+                    `;
+
+                    // Add event listeners to permission buttons
+                    modalContent.querySelectorAll('.change-permission').forEach(button => {
+                        button.addEventListener('click', () => {
+                            const deviceId = button.getAttribute('data-device-id');
+                            const permission = button.getAttribute('data-permission');
+                            changeDevicePermission(deviceId, permission);
+                        });
+                    });
+
+                    // Show the modal
+                    modal.style.display = 'block';
+
+                    // Close modal when clicking the close button
+                    document.querySelector('.close-modal').addEventListener('click', () => {
+                        modal.style.display = 'none';
+                    });
+
+                    // Close modal when clicking outside the modal content
+                    window.addEventListener('click', (event) => {
+                        if (event.target === modal) {
+                            modal.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        }
+
+        // Change device permission
+        function changeDevicePermission(deviceId, permission) {
+            // In a real application, this would make an API call
+            // For demo purposes, we'll just show a notification
+
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = 'notification notification-success';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <div>
+                        <div>Permission Changed</div>
+                        <div class="notification-message">Device ${deviceId} set to ${formatStatus(permission)}</div>
+                    </div>
+                </div>
+            `;
+
+            // Add notification to container
+            const notificationContainer = document.getElementById('notification-container');
+            if (!notificationContainer) {
+                // Create container if it doesn't exist
+                const container = document.createElement('div');
+                container.id = 'notification-container';
+                document.body.appendChild(container);
+                container.appendChild(notification);
+            } else {
+                notificationContainer.appendChild(notification);
+            }
+
+            // Remove notification after 5 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+
+            // Close the modal
+            document.getElementById('device-modal').style.display = 'none';
+
+            // Refresh the devices list
+            loadConnectedDevices();
+            loadDeviceHistory();
+        }
+
+        // Helper function to get badge class based on status
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'read_only':
+                    return 'badge-primary';
+                case 'full_access':
+                    return 'badge-success';
+                case 'blocked':
+                    return 'badge-danger';
+                default:
+                    return 'badge-warning';
+            }
+        }
+
+        // Helper function to format status text
+        function formatStatus(status) {
+            switch (status) {
+                case 'read_only':
+                    return 'Read Only';
+                case 'full_access':
+                    return 'Full Access';
+                case 'blocked':
+                    return 'Blocked';
+                default:
+                    return 'Unknown';
+            }
+        }
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            if (!dateString) return 'Never';
+
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        // Handle navbar toggle for mobile
+        function setupNavbar() {
+            const navbarToggle = document.getElementById('navbar-toggle');
+            const navbarLinks = document.getElementById('navbar-links');
+
+            if (navbarToggle) {
+                navbarToggle.addEventListener('click', () => {
+                    navbarLinks.classList.toggle('active');
+                });
+            }
+        }
+
+        // Scan a specific device
+        function scanDevice(deviceId) {
+            // In a real application, this would make an API call to scan the device
+            // For demo purposes, we'll just show a notification
+            showNotification('Scanning Device', `Scanning device ${deviceId} for threats...`, 'info');
+
+            // Simulate scanning process
+            setTimeout(() => {
+                showNotification('Scan Complete', `Device ${deviceId} scan completed. No threats found.`, 'success');
+            }, 2000);
+        }
+
+        // Simulate real-time scanning
+        function simulateRealTimeScan(deviceId, deviceName) {
+            // Check if socket is initialized
+            if (typeof socket === 'undefined' || !socket) {
+                console.log('Initializing Socket.IO connection...');
+                // Initialize socket connection
+                socket = io.connect(window.location.origin);
+
+                // Set up event listeners if not already set up
+                if (typeof setupSocketEvents === 'function') {
+                    setupSocketEvents();
+                }
+            }
+
+            console.log(`Starting real-time scan for device ${deviceId}: ${deviceName}`);
+
+            // Simulate scan start event
+            const scanStartData = {
+                device_id: deviceId,
+                device_name: deviceName,
+                timestamp: new Date().toISOString()
+            };
+
+            // Manually trigger the scan started event handler
+            if (typeof socket._callbacks !== 'undefined') {
+                showNotification('Real-time Scan', `Starting real-time scan for ${deviceName}...`, 'info');
+                createScanProgressContainer(deviceId, deviceName);
+
+                // Simulate file counting
+                setTimeout(() => {
+                    const totalFiles = Math.floor(Math.random() * 400) + 100; // Random between 100-500
+                    updateScanProgress({
+                        device_id: deviceId,
+                        total_files: totalFiles,
+                        scanned_files: 0,
+                        status: 'counting',
+                        percent: 0
+                    });
+
+                    // Simulate file scanning
+                    let scannedFiles = 0;
+                    let maliciousCount = 0;
+                    let suspiciousCount = 0;
+                    const scanInterval = setInterval(() => {
+                        // Increment scanned files
+                        const batchSize = Math.floor(Math.random() * 10) + 1;
+                        scannedFiles = Math.min(scannedFiles + batchSize, totalFiles);
+                        const percent = Math.floor((scannedFiles / totalFiles) * 100);
+
+                        // Update progress
+                        updateScanProgress({
+                            device_id: deviceId,
+                            total_files: totalFiles,
+                            scanned_files: scannedFiles,
+                            status: 'scanning',
+                            percent: percent,
+                            current_file: `file_${scannedFiles}.txt`
+                        });
+
+                        // Randomly find malicious or suspicious files
+                        if (Math.random() < 0.05) { // 5% chance
+                            maliciousCount++;
+                            const fileName = `malicious_file_${maliciousCount}.exe`;
+                            const filePath = `/media/usb/${fileName}`;
+
+                            // Add to malicious files list
+                            addToFilesList(deviceId, filePath, 'malicious');
+
+                            // Show notification
+                            showNotification('Threat Detected!', `Malicious file found: ${fileName}`, 'danger');
+                        }
+
+                        if (Math.random() < 0.1) { // 10% chance
+                            suspiciousCount++;
+                            const fileName = `suspicious_file_${suspiciousCount}.dll`;
+                            const filePath = `/media/usb/${fileName}`;
+
+                            // Add to suspicious files list
+                            addToFilesList(deviceId, filePath, 'suspicious');
+
+                            // Show notification
+                            showNotification('Warning', `Suspicious file found: ${fileName}`, 'warning');
+                        }
+
+                        // Check if scan is complete
+                        if (scannedFiles >= totalFiles) {
+                            clearInterval(scanInterval);
+
+                            // Complete scan
+                            const scanDuration = (Math.random() * 3 + 2).toFixed(1);
+                            let result = 'success';
+                            let message = `Scan completed on ${deviceName} - `;
+
+                            if (maliciousCount > 0) {
+                                result = 'danger';
+                                message += `${maliciousCount} malicious files detected!`;
+                            } else if (suspiciousCount > 0) {
+                                result = 'warning';
+                                message += `${suspiciousCount} suspicious files detected`;
+                            } else {
+                                message += "No threats detected";
+                            }
+
+                            completeScanProgress(deviceId, {
+                                infected_files: maliciousCount,
+                                suspicious_files: suspiciousCount,
+                                scan_duration: scanDuration
+                            });
+
+                            // Show notification
+                            showNotification('Scan Complete', message, result === 'danger' ? 'danger' : (result === 'warning' ? 'warning' : 'success'));
+                        }
+                    }, 200); // Update every 200ms
+                }, 1000);
+            } else {
+                // Fallback if socket.io is not properly initialized
+                showNotification('Error', 'Real-time scanning is not available. Please try again later.', 'danger');
+            }
+        }
+
+        // Scan all devices
+        function scanAllDevices() {
+            const selectedDevices = Array.from(document.querySelectorAll('.device-select-checkbox:checked'))
+                .map(checkbox => checkbox.id.replace('device-', ''));
+
+            if (selectedDevices.length === 0) {
+                // If no devices are selected, scan all connected devices
+                showNotification('Scanning All Devices', 'Scanning all connected devices for threats...', 'info');
+            } else {
+                // Scan only selected devices
+                showNotification('Scanning Selected Devices', `Scanning ${selectedDevices.length} selected devices for threats...`, 'info');
+            }
+
+            // Simulate scanning process
+            setTimeout(() => {
+                showNotification('Scan Complete', 'All device scans completed. No threats found.', 'success');
+            }, 3000);
+        }
+
+        // Show notification
+        function showNotification(title, message, type = 'success') {
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <div>
+                        <div>${title}</div>
+                        <div class="notification-message">${message}</div>
+                    </div>
+                </div>
+            `;
+
+            // Add notification to container
+            const notificationContainer = document.getElementById('notification-container');
+            if (!notificationContainer) {
+                // Create container if it doesn't exist
+                const container = document.createElement('div');
+                container.id = 'notification-container';
+                document.body.appendChild(container);
+                container.appendChild(notification);
+            } else {
+                notificationContainer.appendChild(notification);
+            }
+
+            // Remove notification after 5 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupNavbar();
+            loadConnectedDevices();
+            loadDeviceHistory();
+
+            // Add refresh button event listener
+            refreshButton.addEventListener('click', () => {
+                devicesContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading devices...</div>
+                    </div>
+                `;
+                deviceHistoryContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading device history...</div>
+                    </div>
+                `;
+
+                loadConnectedDevices();
+                loadDeviceHistory();
+            });
+
+            // Add scan all devices button event listener
+            document.getElementById('scan-all-devices').addEventListener('click', scanAllDevices);
+
+            // Add refresh devices button event listener
+            document.getElementById('refresh-devices-btn').addEventListener('click', () => {
+                devicesContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Refreshing devices...</div>
+                    </div>
+                `;
+
+                loadConnectedDevices();
+            });
+
+            // Add event delegation for scan device buttons
+            document.addEventListener('click', (event) => {
+                if (event.target.closest('.scan-device-btn')) {
+                    const button = event.target.closest('.scan-device-btn');
+                    const deviceId = button.getAttribute('data-device-id');
+                    scanDevice(deviceId);
+                }
+
+                if (event.target.closest('.realtime-scan-btn')) {
+                    const button = event.target.closest('.realtime-scan-btn');
+                    const deviceId = button.getAttribute('data-device-id');
+                    const deviceName = button.getAttribute('data-device-name');
+                    simulateRealTimeScan(deviceId, deviceName);
+                }
+            });
+        });
+    </script>
+    <script src="browser-usb-monitor.js"></script>
+    <script src="ethical-hacking-effects.js"></script>
+    <script src="termux-notifications.js"></script>
+    <script src="advanced-termux-animations.js"></script>
+    <script src="network-animations.js"></script>
+</body>
+</html>

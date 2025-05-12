@@ -1,0 +1,39 @@
+/* Scan line animations */
+.scan-line-demo {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.5), transparent);
+  animation: scan-horizontal 3s linear infinite;
+  z-index: 1;
+}
+
+.scan-line-1 {
+  top: 20%;
+  animation-delay: 0s;
+}
+
+.scan-line-2 {
+  top: 40%;
+  animation-delay: 1s;
+}
+
+.scan-line-3 {
+  top: 60%;
+  animation-delay: 2s;
+}
+
+.scan-line-4 {
+  top: 80%;
+  animation-delay: 3s;
+}
+
+@keyframes scan-horizontal {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

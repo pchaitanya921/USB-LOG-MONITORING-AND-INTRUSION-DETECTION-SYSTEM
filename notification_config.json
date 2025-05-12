@@ -1,0 +1,31 @@
+{
+    "sms_enabled": true,
+    "sms_provider": "twilio",
+    "phone_numbers": [
+        "+919944273645"
+    ],
+    "twilio_account_sid": "AC94656f2081ae1c98c4cece8dd68ca056",
+    "twilio_auth_token": "70cfd6672bc72163dd2077bc3562ffa9",
+    "twilio_phone_number": "+19082631380",
+    "nexmo_api_key": "",
+    "nexmo_api_secret": "",
+    "nexmo_phone_number": "",
+    "notification_levels": {
+        "connect": true,
+        "disconnect": false,
+        "scan_start": false,
+        "scan_complete": true,
+        "threat_detected": true,
+        "suspicious_detected": true,
+        "system_error": true
+    },
+    "message_format": "standard",
+    "include_file_details": true,
+    "include_location": true,
+    "max_files_in_sms": 5,
+    "retry_attempts": 3,
+    "retry_delay": 60,
+    "rate_limit": 5,
+    "batch_notifications": false,
+    "batch_interval": 300
+}

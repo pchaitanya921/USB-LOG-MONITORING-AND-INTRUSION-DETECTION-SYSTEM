@@ -4,9 +4,10 @@ import datetime
 import json
 import ctypes
 import string
-import importlib.util  # For checking if modules are available
+import importlib.util
 
-# Check if WMI is available
+# Define a flag to check if WMI is available
+# This approach avoids any import errors
 HAS_WMI = importlib.util.find_spec("wmi") is not None
 
 def get_windows_drives():
@@ -48,37 +49,37 @@ def detect_usb_with_wmi():
     """Detect USB devices using WMI (Windows only)."""
     devices = []
     error = None
-
+    
     # Only attempt to use WMI if it's available
     if not HAS_WMI:
         return [], "WMI module not available"
-
+    
     # We use a local import to avoid errors when WMI is not installed
     # This code will only run if HAS_WMI is True
     try:
         # We use a dynamic import to avoid IDE warnings
         wmi_module = importlib.import_module("wmi")
         c = wmi_module.WMI()
-
+        
         # Get USB drives
         for disk in c.Win32_DiskDrive():
             if "USB" in disk.InterfaceType:
                 device_id = disk.PNPDeviceID
-
+                
                 # Get more details about the device
                 for partition in c.Win32_DiskPartition():
                     if partition.DiskIndex == disk.Index:
                         for logical_disk in c.Win32_LogicalDiskToPartition():
                             if logical_disk.Antecedent.split('=')[1].strip('"\'') == partition.DeviceID:
                                 drive_letter = logical_disk.Dependent.split('=')[1].strip('"\'')
-
+                                
                                 # Get drive information
                                 for drive in c.Win32_LogicalDisk():
                                     if drive.DeviceID == drive_letter:
                                         # Convert bytes to GB
                                         size = int(drive.Size) / (1024**3) if drive.Size else 0
                                         free_space = int(drive.FreeSpace) / (1024**3) if drive.FreeSpace else 0
-
+                                        
                                         devices.append({
                                             "name": disk.Model.strip(),
                                             "id": device_id,
@@ -87,7 +88,7 @@ def detect_usb_with_wmi():
                                             "free_space": f"{free_space:.1f}GB",
                                             "connection_time": datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
                                         })
-
+        
         # If no USB drives found, try to get USB devices without drive letters
         if not devices:
             for usb in c.Win32_USBHub():
@@ -96,17 +97,17 @@ def detect_usb_with_wmi():
                     "id": usb.DeviceID,
                     "connection_time": datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
                 })
-
+    
     except Exception as e:
         error = f"Error using WMI: {str(e)}"
-
+    
     return devices, error
 
 def detect_usb_basic_windows():
     """Detect USB devices using basic Windows API (no WMI required)."""
     devices = []
     error = None
-
+    
     try:
         # Get all drives
         for drive_letter in get_windows_drives():
@@ -114,12 +115,12 @@ def detect_usb_basic_windows():
             # 2 = DRIVE_REMOVABLE (likely USB)
             if get_drive_type(drive_path) == 2:
                 total_bytes, free_bytes = get_drive_info(drive_path)
-
+                
                 if total_bytes and free_bytes:
                     # Convert to GB
                     total_gb = total_bytes / (1024**3)
                     free_gb = free_bytes / (1024**3)
-
+                    
                     devices.append({
                         "name": f"Removable Drive ({drive_letter}:)",
                         "id": f"DRIVE_{drive_letter}",
@@ -135,32 +136,32 @@ def detect_usb_basic_windows():
                         "drive_letter": drive_path,
                         "connection_time": datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
                     })
-
+    
     except Exception as e:
         error = f"Error in basic detection: {str(e)}"
-
+    
     return devices, error
 
 def detect_usb_linux():
     """Detect USB devices on Linux."""
     devices = []
     error = None
-
+    
     try:
         # Try to use pyudev if available
         if importlib.util.find_spec("pyudev") is not None:
             pyudev = importlib.import_module("pyudev")
             context = pyudev.Context()
-
+            
             for device in context.list_devices(subsystem='block', DEVTYPE='disk'):
                 if device.get('ID_BUS') == 'usb':
                     name = device.get('ID_MODEL', 'Unknown USB Device')
                     device_id = device.get('ID_SERIAL', 'Unknown ID')
-
+                    
                     # Try to get partition information
-                    partitions = [p for p in context.list_devices(subsystem='block', DEVTYPE='partition')
+                    partitions = [p for p in context.list_devices(subsystem='block', DEVTYPE='partition') 
                                  if p.parent == device]
-
+                    
                     if partitions:
                         for part in partitions:
                             # Try to get mount point
@@ -173,7 +174,7 @@ def detect_usb_linux():
                                             break
                             except:
                                 pass
-
+                            
                             # If mounted, get size information
                             if mount_point:
                                 try:
@@ -181,7 +182,7 @@ def detect_usb_linux():
                                     total, _, free = shutil.disk_usage(mount_point)
                                     total_gb = total / (1024**3)
                                     free_gb = free / (1024**3)
-
+                                    
                                     devices.append({
                                         "name": name,
                                         "id": device_id,
@@ -215,14 +216,14 @@ def detect_usb_linux():
                         if device.get('rm') == True:  # Removable flag
                             name = device.get('name', 'Unknown')
                             size = device.get('size', 'Unknown')
-
+                            
                             # Check for mount points
                             mount_point = None
                             for child in device.get('children', []):
                                 if child.get('mountpoint'):
                                     mount_point = child.get('mountpoint')
                                     break
-
+                            
                             devices.append({
                                 "name": f"Removable Drive ({name})",
                                 "id": f"DRIVE_{name}",
@@ -240,54 +241,54 @@ def detect_usb_linux():
                             "drive_letter": f"/dev/{dev}",
                             "connection_time": datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
                         })
-
+    
     except Exception as e:
         error = f"Error detecting Linux USB devices: {str(e)}"
-
+    
     return devices, error
 
 def detect_usb_macos():
     """Detect USB devices on macOS."""
     devices = []
     error = None
-
+    
     try:
         # Use system_profiler to get USB devices
         import subprocess
-        result = subprocess.run(['system_profiler', 'SPUSBDataType', '-json'],
+        result = subprocess.run(['system_profiler', 'SPUSBDataType', '-json'], 
                                capture_output=True, text=True)
-
+        
         if result.returncode == 0:
             data = json.loads(result.stdout)
             usb_items = data.get('SPUSBDataType', [])
-
+            
             for usb in usb_items:
                 # Process USB devices recursively
                 def process_usb_device(device, parent_name=""):
                     device_name = device.get('_name', 'Unknown USB Device')
                     full_name = f"{parent_name} {device_name}".strip()
-
+                    
                     # Only add storage devices
                     if 'Media' in device:
                         for media in device['Media']:
                             size = media.get('size', 'Unknown')
                             size_gb = float(size.replace(',', '')) / (1000**3) if size.replace(',', '').isdigit() else 0
-
+                            
                             devices.append({
                                 "name": full_name,
                                 "id": device.get('serial_num', 'Unknown ID'),
                                 "size": f"{size_gb:.1f}GB",
                                 "connection_time": datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
                             })
-
+                    
                     # Process child devices
                     if '_items' in device:
                         for child in device['_items']:
                             process_usb_device(child, full_name)
-
+                
                 # Start processing from top level
                 process_usb_device(usb)
-
+        
         # If no devices found, try basic detection using /Volumes
         if not devices:
             volumes = os.listdir('/Volumes')
@@ -295,17 +296,17 @@ def detect_usb_macos():
                 # Skip the main drive
                 if volume != "Macintosh HD":
                     volume_path = os.path.join('/Volumes', volume)
-
+                    
                     # Get disk info if possible
                     try:
                         stat = os.statvfs(volume_path)
                         total = stat.f_frsize * stat.f_blocks
                         free = stat.f_frsize * stat.f_bavail
-
+                        
                         # Convert to GB
                         total_gb = total / (1024**3)
                         free_gb = free / (1024**3)
-
+                        
                         devices.append({
                             "name": volume,
                             "id": f"VOLUME_{volume}",
@@ -321,32 +322,32 @@ def detect_usb_macos():
                             "drive_letter": volume_path,
                             "connection_time": datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
                         })
-
+    
     except Exception as e:
         error = f"Error detecting macOS USB devices: {str(e)}"
-
+    
     return devices, error
 
 def get_usb_devices():
     """Get USB devices based on the operating system."""
     system = platform.system()
-
+    
     if system == "Windows":
         # Try WMI method first if available
         if HAS_WMI:
             devices, error = detect_usb_with_wmi()
             if devices or not error:
                 return devices, error
-
+        
         # Fall back to basic method if WMI failed or not available
         return detect_usb_basic_windows()
-
+    
     elif system == "Linux":
         return detect_usb_linux()
-
+    
     elif system == "Darwin":  # macOS
         return detect_usb_macos()
-
+    
     else:
         return [], f"Unsupported OS: {system}"
 
@@ -355,12 +356,12 @@ def test_usb_detection():
     print(f"Operating System: {platform.system()} {platform.release()}")
     print(f"WMI module available: {HAS_WMI}")
     print("Detecting USB devices...")
-
+    
     devices, error = get_usb_devices()
-
+    
     if error:
         print(f"Error: {error}")
-
+    
     if devices:
         print(f"Found {len(devices)} USB device(s):")
         for i, device in enumerate(devices, 1):

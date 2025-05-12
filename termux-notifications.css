@@ -1,0 +1,313 @@
+/* Termux-style Popup Notifications for USB Monitoring System */
+
+/* Import Fira Code font for terminal-like text */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+
+/* Base notification container */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    font-family: 'Fira Code', monospace !important;
+}
+
+/* Termux-style notification */
+.termux-notification {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    color: #00ff00 !important;
+    border-left: 3px solid #00ff00 !important;
+    padding: 12px 15px !important;
+    margin-bottom: 10px !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3) !important;
+    font-family: 'Fira Code', monospace !important;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out forwards;
+    max-width: 100%;
+}
+
+/* Notification types */
+.termux-notification.info {
+    border-left-color: #00ff00 !important;
+}
+
+.termux-notification.success {
+    border-left-color: #00ff00 !important;
+}
+
+.termux-notification.warning {
+    border-left-color: #ffff00 !important;
+}
+
+.termux-notification.error {
+    border-left-color: #ff0000 !important;
+}
+
+/* Terminal-style header */
+.termux-notification-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: #888;
+}
+
+.termux-notification-timestamp {
+    color: #888;
+}
+
+/* Terminal-style content */
+.termux-notification-content {
+    font-family: 'Fira Code', monospace !important;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+/* Command prompt styling */
+.termux-prompt {
+    color: #00ff00;
+    margin-right: 5px;
+}
+
+/* Scanning animation */
+.termux-notification.scanning::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #00ff00, transparent);
+    animation: scanLine 2s linear infinite;
+}
+
+/* Binary digits background */
+.termux-notification-binary {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0.1;
+    z-index: -1;
+}
+
+.binary-digit {
+    position: absolute;
+    color: #00ff00;
+    font-size: 10px;
+    animation: binaryFall linear infinite;
+}
+
+/* Close button */
+.termux-notification-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #888;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
+    opacity: 0.7;
+}
+
+.termux-notification-close:hover {
+    opacity: 1;
+    color: #00ff00;
+}
+
+/* Blinking cursor effect */
+.termux-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background-color: #00ff00;
+    margin-left: 4px;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes scanLine {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes binaryFall {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* Toast notifications (react-toastify) override */
+.Toastify__toast {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    color: #00ff00 !important;
+    border-left: 3px solid #00ff00 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3) !important;
+    font-family: 'Fira Code', monospace !important;
+    padding: 12px 15px !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.Toastify__toast--success {
+    border-left-color: #00ff00 !important;
+}
+
+.Toastify__toast--info {
+    border-left-color: #00ff00 !important;
+}
+
+.Toastify__toast--warning {
+    border-left-color: #ffff00 !important;
+}
+
+.Toastify__toast--error {
+    border-left-color: #ff0000 !important;
+}
+
+.Toastify__toast-body {
+    font-family: 'Fira Code', monospace !important;
+    padding: 0 !important;
+}
+
+.Toastify__progress-bar {
+    background: linear-gradient(to right, #00ff00, #88ff88) !important;
+    height: 2px !important;
+}
+
+/* Add scanning animation to toast notifications */
+.Toastify__toast::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #00ff00, transparent);
+    animation: scanLine 2s linear infinite;
+    z-index: 1;
+}
+
+/* Add terminal prompt to toast notifications - removed [~]$ prefix */
+.Toastify__toast-body::before {
+    content: "";
+    color: #00ff00;
+    margin-right: 0;
+}
+
+/* Custom styling for the popup notifications in the dashboard */
+.popup-notification {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    color: #00ff00 !important;
+    border-left: 3px solid #00ff00 !important;
+    padding: 12px 15px !important;
+    margin-bottom: 10px !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3) !important;
+    font-family: 'Fira Code', monospace !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.popup-notification::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #00ff00, transparent);
+    animation: scanLine 2s linear infinite;
+}
+
+.popup-notification-content {
+    font-family: 'Fira Code', monospace !important;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.popup-notification-content::before {
+    content: "";
+    color: #00ff00;
+    margin-right: 0;
+}
+
+/* Styling for the notification icon */
+.popup-notification-icon {
+    color: #00ff00;
+    margin-right: 10px;
+}
+
+/* Styling for the close button */
+.popup-notification-close {
+    color: #888;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
+    opacity: 0.7;
+}
+
+.popup-notification-close:hover {
+    opacity: 1;
+    color: #00ff00;
+}

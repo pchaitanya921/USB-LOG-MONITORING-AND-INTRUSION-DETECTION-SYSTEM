@@ -1,0 +1,3 @@
+@echo off
+echo Launching USB Monitoring Dashboard...
+powershell -ExecutionPolicy Bypass -File "Launch-USB-Dashboard.ps1"

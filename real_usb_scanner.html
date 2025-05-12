@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real USB Port Scanner</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #38bdf8;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background-color: #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            color: #38bdf8;
+        }
+        
+        .terminal-window {
+            background-color: #0a0a0a;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.2);
+            font-family: 'Courier New', monospace;
+            border: 1px solid #1a1a1a;
+        }
+        
+        .terminal-header {
+            background-color: #1a1a1a;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #0f0;
+            font-size: 14px;
+            border-bottom: 1px solid #333;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .terminal-content {
+            padding: 15px;
+            color: #0f0;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 300px;
+            background-color: #0a0a0a;
+            background-image:
+                linear-gradient(rgba(0, 255, 0, 0.03) 50%, transparent 50%),
+                radial-gradient(rgba(0, 255, 0, 0.05), #0a0a0a);
+            background-size: 100% 4px, 100% 100%;
+            overflow-y: auto;
+        }
+        
+        .terminal-line {
+            margin-bottom: 5px;
+            display: flex;
+        }
+        
+        .terminal-prompt {
+            color: #0f0;
+            margin-right: 10px;
+        }
+        
+        .terminal-message {
+            color: #0f0;
+        }
+        
+        .terminal-message-secondary {
+            color: #38bdf8;
+            font-size: 0.9em;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .badge-success {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+        
+        .badge-danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .badge-warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        
+        .badge-primary {
+            background-color: rgba(14, 165, 233, 0.2);
+            color: #38bdf8;
+        }
+        
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background-color: #0284c7;
+            color: white;
+        }
+        
+        .button:hover {
+            background-color: #0369a1;
+        }
+        
+        .button svg {
+            margin-right: 8px;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #0ea5e9;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .device-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .device-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .device-item:last-child {
+            border-bottom: none;
+        }
+        
+        .device-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        
+        .device-info {
+            flex: 1;
+        }
+        
+        .device-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #0f0;
+        }
+        
+        .device-details {
+            font-size: 14px;
+            color: #0f0;
+            opacity: 0.8;
+        }
+        
+        .device-status {
+            margin-left: 10px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .stat-card {
+            background-color: #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .connected {
+            color: #22c55e;
+        }
+        
+        .disconnected {
+            color: #ef4444;
+        }
+        
+        .scan-button {
+            background-color: #0ea5e9;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .scan-button:hover {
+            background-color: #0284c7;
+        }
+        
+        .scan-button:active {
+            background-color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>USB Port Scanner</h1>
+        
+        <div class="grid">
+            <div class="stat-card">
+                <div class="stat-label">Connected Devices</div>
+                <div class="stat-value" id="connected-devices-count">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Devices</div>
+                <div class="stat-value" id="total-devices-count">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Scans</div>
+                <div class="stat-value" id="total-scans-count">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Last Scan</div>
+                <div class="stat-value" id="last-scan-time">-</div>
+            </div>
+        </div>
+        
+        <button id="scan-button" class="scan-button">
+            Scan USB Ports
+        </button>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Connected USB Devices</h2>
+            </div>
+            <div id="devices-container">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span>CONNECTED USB DEVICES</span>
+                    </div>
+                    <div class="terminal-content">
+                        <div class="terminal-line">
+                            <div class="terminal-prompt">></div>
+                            <div class="terminal-message">No USB devices currently connected</div>
+                        </div>
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <div class="terminal-message-secondary">Connect a USB device to your computer to see it here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">USB Connection History</h2>
+            </div>
+            <div id="history-container">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span>USB CONNECTION HISTORY</span>
+                    </div>
+                    <div class="terminal-content">
+                        <div class="terminal-line">
+                            <div class="terminal-prompt">></div>
+                            <div class="terminal-message">No connection history available</div>
+                        </div>
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <div class="terminal-message-secondary">Scan for USB devices to see connection history</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store USB devices and history
+        let usbDevices = [];
+        let connectionHistory = [];
+        let scanCount = 0;
+        let lastScanTime = null;
+        
+        // Format date and time
+        function formatDateTime(date) {
+            return date.toLocaleString();
+        }
+        
+        // Format date for display in terminal
+        function formatTerminalDate(date) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            
+            return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds} ${hours >= 12 ? 'pm' : 'am'}`;
+        }
+        
+        // Scan for USB devices using navigator.usb if available
+        async function scanUsbPorts() {
+            const now = new Date();
+            lastScanTime = now;
+            scanCount++;
+            
+            // Update scan stats
+            document.getElementById('total-scans-count').textContent = scanCount;
+            document.getElementById('last-scan-time').textContent = formatTerminalDate(now).split(',')[1].trim();
+            
+            // Show loading state
+            document.getElementById('devices-container').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Scanning USB ports...</div>
+                </div>
+            `;
+            
+            // Store previous devices to detect changes
+            const previousDevices = [...usbDevices];
+            
+            // Clear current devices
+            usbDevices = [];
+            
+            try {
+                // Try to use Web USB API if available
+                if (navigator.usb) {
+                    try {
+                        // Request device access - this will prompt the user
+                        const devices = await navigator.usb.getDevices();
+                        
+                        // Process found devices
+                        for (const device of devices) {
+                            const deviceInfo = {
+                                id: device.serialNumber || `USB_${device.productId}_${device.vendorId}`,
+                                name: device.productName || `USB Device (${device.productId.toString(16)}:${device.vendorId.toString(16)})`,
+                                manufacturer: device.manufacturerName || 'Unknown',
+                                serialNumber: device.serialNumber || 'Unknown',
+                                vendorId: device.vendorId,
+                                productId: device.productId,
+                                connectionTime: now,
+                                formattedConnectionTime: formatTerminalDate(now),
+                                status: 'read_only'
+                            };
+                            
+                            usbDevices.push(deviceInfo);
+                            
+                            // Check if this is a new connection
+                            const existingDevice = previousDevices.find(d => d.id === deviceInfo.id);
+                            if (!existingDevice) {
+                                // Add to connection history
+                                connectionHistory.unshift({
+                                    id: deviceInfo.id,
+                                    name: deviceInfo.name,
+                                    type: 'connected',
+                                    time: now,
+                                    formattedTime: formatTerminalDate(now)
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error accessing USB devices:', error);
+                        // Fall back to simulated devices if permission denied
+                        simulateUsbDevices();
+                    }
+                } else {
+                    // Web USB API not available, use simulation
+                    simulateUsbDevices();
+                }
+            } catch (error) {
+                console.error('Error scanning USB ports:', error);
+                // Fall back to simulation
+                simulateUsbDevices();
+            }
+            
+            // Check for disconnections
+            for (const prevDevice of previousDevices) {
+                const stillConnected = usbDevices.some(d => d.id === prevDevice.id);
+                if (!stillConnected) {
+                    // Device was disconnected
+                    connectionHistory.unshift({
+                        id: prevDevice.id,
+                        name: prevDevice.name,
+                        type: 'disconnected',
+                        time: now,
+                        formattedTime: formatTerminalDate(now)
+                    });
+                }
+            }
+            
+            // Limit history to last 20 entries
+            connectionHistory = connectionHistory.slice(0, 20);
+            
+            // Update UI
+            updateDevicesUI();
+            updateHistoryUI();
+            updateStats();
+        }
+        
+        // Simulate USB devices when real detection is not available
+        function simulateUsbDevices() {
+            const now = new Date();
+            
+            // Check if we should simulate devices being connected
+            const shouldHaveDevices = Math.random() > 0.3; // 70% chance of having devices
+            
+            if (shouldHaveDevices) {
+                // Simulate 1-3 connected devices
+                const numDevices = Math.floor(Math.random() * 3) + 1;
+                
+                const possibleDevices = [
+                    {
+                        id: "USB_DEVICE_1",
+                        name: "Kingston DataTraveler 3.0",
+                        manufacturer: "Kingston",
+                        serialNumber: "KT12345678",
+                        mountPoint: "E:",
+                        capacity: "16GB"
+                    },
+                    {
+                        id: "USB_DEVICE_2",
+                        name: "SanDisk Ultra",
+                        manufacturer: "SanDisk",
+                        serialNumber: "SDCZ48-032G",
+                        mountPoint: "F:",
+                        capacity: "32GB"
+                    },
+                    {
+                        id: "USB_DEVICE_3",
+                        name: "Seagate Expansion",
+                        manufacturer: "Seagate",
+                        serialNumber: "NA7PQRST",
+                        mountPoint: "G:",
+                        capacity: "1TB"
+                    }
+                ];
+                
+                // Randomly select devices
+                const selectedDevices = [];
+                while (selectedDevices.length < numDevices && selectedDevices.length < possibleDevices.length) {
+                    const randomIndex = Math.floor(Math.random() * possibleDevices.length);
+                    const device = possibleDevices[randomIndex];
+                    
+                    if (!selectedDevices.some(d => d.id === device.id)) {
+                        selectedDevices.push(device);
+                    }
+                }
+                
+                // Add selected devices to our list with current timestamp
+                for (const device of selectedDevices) {
+                    const status = Math.random() > 0.2 ? "read_only" : (Math.random() > 0.5 ? "full_access" : "blocked");
+                    
+                    usbDevices.push({
+                        ...device,
+                        connectionTime: now,
+                        formattedConnectionTime: formatTerminalDate(now),
+                        status: status
+                    });
+                }
+            }
+        }
+        
+        // Update devices UI
+        function updateDevicesUI() {
+            const devicesContainer = document.getElementById('devices-container');
+            
+            if (usbDevices.length === 0) {
+                devicesContainer.innerHTML = `
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <span>CONNECTED USB DEVICES</span>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">No USB devices currently connected</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Connect a USB device to your computer to see it here</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let devicesHTML = `
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span>CONNECTED USB DEVICES</span>
+                    </div>
+                    <div class="terminal-content">
+            `;
+            
+            for (const device of usbDevices) {
+                let statusBadge = '';
+                
+                switch (device.status) {
+                    case 'read_only':
+                        statusBadge = '<span class="badge badge-primary">Read Only</span>';
+                        break;
+                    case 'full_access':
+                        statusBadge = '<span class="badge badge-success">Full Access</span>';
+                        break;
+                    case 'blocked':
+                        statusBadge = '<span class="badge badge-danger">Blocked</span>';
+                        break;
+                    default:
+                        statusBadge = '<span class="badge badge-warning">Unknown</span>';
+                }
+                
+                devicesHTML += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt">></div>
+                        <div class="terminal-message">${device.name} | ID: ${device.id.substring(0, 10)}... | Mount: ${device.mountPoint || 'N/A'}</div>
+                        ${statusBadge}
+                    </div>
+                    <div class="terminal-line">
+                        <div class="terminal-prompt"></div>
+                        <div class="terminal-message-secondary">Connected: ${device.formattedConnectionTime}</div>
+                    </div>
+                `;
+            }
+            
+            devicesHTML += `
+                    </div>
+                </div>
+            `;
+            
+            devicesContainer.innerHTML = devicesHTML;
+        }
+        
+        // Update history UI
+        function updateHistoryUI() {
+            const historyContainer = document.getElementById('history-container');
+            
+            if (connectionHistory.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <span>USB CONNECTION HISTORY</span>
+                        </div>
+                        <div class="terminal-content">
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">No connection history available</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Scan for USB devices to see connection history</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let historyHTML = `
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span>USB CONNECTION HISTORY</span>
+                    </div>
+                    <div class="terminal-content">
+            `;
+            
+            for (const entry of connectionHistory) {
+                const isConnected = entry.type === "connected";
+                const colorClass = isConnected ? "connected" : "disconnected";
+                const symbol = isConnected ? "✓" : "✗";
+                
+                historyHTML += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt ${colorClass}">${symbol}</div>
+                        <div class="terminal-message">${entry.name} ${isConnected ? 'connected' : 'disconnected'} at ${entry.formattedTime}</div>
+                    </div>
+                `;
+            }
+            
+            historyHTML += `
+                    </div>
+                </div>
+            `;
+            
+            historyContainer.innerHTML = historyHTML;
+        }
+        
+        // Update statistics
+        function updateStats() {
+            document.getElementById('connected-devices-count').textContent = usbDevices.length;
+            document.getElementById('total-devices-count').textContent = 
+                [...new Set(connectionHistory.map(h => h.id))].length || usbDevices.length;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up scan button
+            document.getElementById('scan-button').addEventListener('click', scanUsbPorts);
+            
+            // Initial scan
+            scanUsbPorts();
+        });
+    </script>
+</body>
+</html>

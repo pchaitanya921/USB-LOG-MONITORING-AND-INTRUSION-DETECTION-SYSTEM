@@ -1,0 +1,16 @@
+{
+    "DRIVE_F": {
+        "id": "DRIVE_F",
+        "name": "Removable Drive (F:)",
+        "permission": "read_only",
+        "added": "27/04/2025, 19:56:25",
+        "last_updated": "27/04/2025, 19:56:25",
+        "history": [
+            {
+                "old_permission": "read_only",
+                "new_permission": "read_only",
+                "timestamp": "27/04/2025, 19:56:25"
+            }
+        ]
+    }
+}

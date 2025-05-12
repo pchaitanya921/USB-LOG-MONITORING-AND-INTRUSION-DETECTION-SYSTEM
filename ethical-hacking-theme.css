@@ -1,0 +1,215 @@
+/* Ethical Hacking Theme with Termux-style Text for USB Monitoring System */
+
+/* Termux-style Font */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+
+/* Termux-style Button Styling */
+.termux-button {
+    font-family: 'Fira Code', monospace !important;
+    background-color: #1a1a1a !important;
+    color: #00ff00 !important;
+    border: 1px solid #00ff00 !important;
+    border-radius: 0 !important;
+    padding: 8px 16px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3) !important;
+}
+
+.termux-button:hover {
+    background-color: #2a2a2a !important;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5) !important;
+}
+
+.termux-button:active {
+    background-color: #333333 !important;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.7) !important;
+}
+
+/* Scan Animation */
+.termux-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00ff00, transparent);
+    animation: scan-line 2s linear infinite;
+}
+
+@keyframes scan-line {
+    0% {
+        left: -100%;
+    }
+    50% {
+        left: 100%;
+    }
+    100% {
+        left: -100%;
+    }
+}
+
+/* Blinking Cursor Effect */
+.termux-button::after {
+    content: "_";
+    display: inline-block;
+    animation: blink 1s step-end infinite;
+    margin-left: 5px;
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Scan All Devices Button */
+#scan-all-devices.termux-button {
+    background-color: #1a1a1a !important;
+    color: #00ff00 !important;
+}
+
+#scan-all-devices.termux-button svg {
+    fill: #00ff00 !important;
+    stroke: #00ff00 !important;
+}
+
+/* Refresh Devices Button */
+#refresh-devices.termux-button {
+    background-color: #1a1a1a !important;
+    color: #00ff00 !important;
+}
+
+#refresh-devices.termux-button svg {
+    fill: #00ff00 !important;
+    stroke: #00ff00 !important;
+}
+
+/* Individual Scan Button */
+.scan-button.termux-button {
+    background-color: #1a1a1a !important;
+    color: #00ff00 !important;
+    padding: 4px 12px !important;
+    font-size: 12px !important;
+}
+
+/* Terminal-like Text */
+.terminal-text {
+    font-family: 'Fira Code', monospace !important;
+    color: #00ff00 !important;
+}
+
+/* Ethical Hacking Animation for Scan Process */
+.ethical-scan-animation {
+    position: relative;
+    overflow: hidden;
+}
+
+.ethical-scan-animation::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(0, 255, 0, 0.05),
+        rgba(0, 255, 0, 0.02)
+    );
+    animation: scan-pulse 2s ease-in-out infinite;
+}
+
+@keyframes scan-pulse {
+    0% {
+        opacity: 0.1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0.1;
+    }
+}
+
+/* Binary Rain Effect for Scanning Animation */
+.binary-rain {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.binary-digit {
+    position: absolute;
+    color: #00ff00;
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    opacity: 0;
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(300px);
+        opacity: 0;
+    }
+}
+
+/* Notification Styling */
+.notification.ethical-hacking {
+    font-family: 'Fira Code', monospace !important;
+    background-color: #1a1a1a !important;
+    color: #00ff00 !important;
+    border-left: 3px solid #00ff00 !important;
+}
+
+/* Scanning Progress Indicator */
+.scanning-progress {
+    height: 2px;
+    background-color: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+    margin: 5px 0;
+}
+
+.scanning-progress::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 30%;
+    background-color: #00ff00;
+    animation: scanning-progress 1.5s ease-in-out infinite;
+}
+
+@keyframes scanning-progress {
+    0% {
+        left: -30%;
+    }
+    100% {
+        left: 100%;
+    }
+}
