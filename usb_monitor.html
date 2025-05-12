@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real USB Monitoring System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="horizontal-scan.css">
+</head>
+<body>
+    <div class="network-container" id="network-container"></div>
+    <div class="horizontal-scan-container" id="horizontal-scan-container"></div>
+
+    <!-- Top Navigation Bar -->
+    <nav class="top-navbar">
+        <div class="top-navbar-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+            USB Monitoring System
+        </div>
+        <div class="top-navbar-actions">
+            <button class="top-navbar-action" type="button" id="dashboard-btn">
+                Dashboard
+            </button>
+            <button class="top-navbar-action active" type="button" id="devices-btn">
+                Devices
+            </button>
+            <button class="top-navbar-action" type="button" id="scans-btn">
+                Scans
+            </button>
+            <button class="top-navbar-action" type="button" id="alerts-btn">
+                Alerts
+            </button>
+            <button class="top-navbar-action" type="button" id="settings-btn">
+                Settings
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Dashboard Page -->
+        <div id="dashboard-page">
+            <header>
+                <h1>Dashboard</h1>
+                <div class="header-actions">
+                    <button id="dashboard-refresh-button" class="refresh-button" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                        </svg>
+                        Refresh Data
+                    </button>
+                </div>
+            </header>
+
+            <div class="grid">
+                <div class="stat-card">
+                    <div class="stat-label">Connected Devices</div>
+                    <div class="stat-value" id="dashboard-connected-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Devices</div>
+                    <div class="stat-value" id="dashboard-total-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Scans</div>
+                    <div class="stat-value" id="dashboard-scans-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Scan</div>
+                    <div class="stat-value" id="dashboard-last-scan">-</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">System Overview</h2>
+                </div>
+                <div class="card-content">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            SYSTEM STATUS
+                        </div>
+                        <div class="terminal-content" id="dashboard-status">
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">USB Monitoring System active</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Monitoring all USB ports for device connections</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">Malware scanning module loaded</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Ready to scan connected devices for threats</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">Notification system enabled</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Email and SMS alerts configured</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Devices Page -->
+        <div id="devices-page">
+            <header>
+                <h1>USB Devices</h1>
+                <div class="header-actions">
+                    <button id="scan-button" class="refresh-button" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                        </svg>
+                        Refresh Data
+                    </button>
+                </div>
+            </header>
+
+            <div class="grid">
+                <div class="stat-card">
+                    <div class="stat-label">Connected Devices</div>
+                    <div class="stat-value" id="connected-devices-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Devices</div>
+                    <div class="stat-value" id="total-devices-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Scans</div>
+                    <div class="stat-value" id="total-scans-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Scan</div>
+                    <div class="stat-value" id="last-scan-time">-</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Connected USB Devices</h2>
+                </div>
+                <div class="card-content">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            CONNECTED USB DEVICES
+                        </div>
+                        <div class="terminal-content" id="devices-container">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <div>Scanning USB ports...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">USB Connection History</h2>
+                </div>
+                <div class="card-content">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            USB CONNECTION HISTORY
+                        </div>
+                        <div class="terminal-content" id="history-container">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <div>Loading connection history...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scans Page -->
+        <div id="scans-page">
+            <header>
+                <h1>USB Scans</h1>
+                <div class="header-actions">
+                    <button id="new-scan-button" class="refresh-button" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5v14"></path>
+                        </svg>
+                        New Scan
+                    </button>
+                </div>
+            </header>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Scan Options</h2>
+                </div>
+                <div class="card-content">
+                    <div class="scan-options">
+                        <div class="scan-option">
+                            <input type="checkbox" id="scan-malware" checked>
+                            <label for="scan-malware">Malware Detection</label>
+                        </div>
+                        <div class="scan-option">
+                            <input type="checkbox" id="scan-suspicious" checked>
+                            <label for="scan-suspicious">Suspicious Files</label>
+                        </div>
+                        <div class="scan-option">
+                            <input type="checkbox" id="scan-autorun" checked>
+                            <label for="scan-autorun">Autorun Files</label>
+                        </div>
+                        <div class="scan-option">
+                            <input type="checkbox" id="scan-hidden" checked>
+                            <label for="scan-hidden">Hidden Files</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Scan History</h2>
+                </div>
+                <div class="card-content">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            SCAN HISTORY
+                        </div>
+                        <div class="terminal-content" id="scan-history-container">
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">Scan #39 - 27/4/2023, 5:06:10 pm</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Device: Seagate External HDD | Result: Clean</div>
+                            </div>
+                            <div class="device-separator"></div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">Scan #38 - 27/4/2023, 4:06:10 pm</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Device: Lexar JumpDrive | Result: Clean</div>
+                            </div>
+                            <div class="device-separator"></div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt">></div>
+                                <div class="terminal-message">Scan #37 - 27/4/2023, 3:06:10 pm</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Device: WD Elements | Result: Clean</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Page -->
+        <div id="alerts-page">
+            <header>
+                <h1>USB Alerts</h1>
+                <div class="header-actions">
+                    <button id="clear-alerts-button" class="refresh-button" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        </svg>
+                        Clear Alerts
+                    </button>
+                </div>
+            </header>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Notification Settings</h2>
+                </div>
+                <div class="card-content">
+                    <div class="notification-settings">
+                        <div class="notification-option">
+                            <input type="checkbox" id="notify-email" checked>
+                            <label for="notify-email">Email Notifications</label>
+                        </div>
+                        <div class="notification-option">
+                            <input type="checkbox" id="notify-sms" checked>
+                            <label for="notify-sms">SMS Notifications</label>
+                        </div>
+                        <div class="notification-option">
+                            <input type="checkbox" id="notify-desktop" checked>
+                            <label for="notify-desktop">Desktop Notifications</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Alerts</h2>
+                </div>
+                <div class="card-content">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            ALERT HISTORY
+                        </div>
+                        <div class="terminal-content" id="alerts-container">
+                            <div class="terminal-line">
+                                <div class="terminal-prompt disconnected">!</div>
+                                <div class="terminal-message">Suspicious file detected - 27/4/2023, 2:15:30 pm</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Device: Kingston DataTraveler | File: autorun.inf</div>
+                            </div>
+                            <div class="device-separator"></div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt connected">✓</div>
+                                <div class="terminal-message">Alert cleared - 27/4/2023, 1:45:10 pm</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Device: SanDisk Ultra | File: system.exe</div>
+                            </div>
+                            <div class="device-separator"></div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt disconnected">!</div>
+                                <div class="terminal-message">Malware detected - 27/4/2023, 1:30:22 pm</div>
+                            </div>
+                            <div class="terminal-line">
+                                <div class="terminal-prompt"></div>
+                                <div class="terminal-message-secondary">Device: SanDisk Ultra | File: system.exe</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings-page">
+            <header>
+                <h1>Settings</h1>
+                <div class="header-actions">
+                    <button id="save-settings-button" class="refresh-button" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Save Settings
+                    </button>
+                </div>
+            </header>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">General Settings</h2>
+                </div>
+                <div class="card-content">
+                    <div class="settings-form">
+                        <div class="settings-group">
+                            <label for="auto-scan">Auto-scan USB devices</label>
+                            <select id="auto-scan" class="settings-input">
+                                <option value="always">Always</option>
+                                <option value="ask">Ask before scanning</option>
+                                <option value="never">Never</option>
+                            </select>
+                        </div>
+                        <div class="settings-group">
+                            <label for="default-permission">Default USB permission</label>
+                            <select id="default-permission" class="settings-input">
+                                <option value="readonly">Read Only</option>
+                                <option value="full">Full Access</option>
+                                <option value="block">Block Access</option>
+                            </select>
+                        </div>
+                        <div class="settings-group">
+                            <label for="refresh-interval">Auto-refresh interval</label>
+                            <select id="refresh-interval" class="settings-input">
+                                <option value="10">10 seconds</option>
+                                <option value="30" selected>30 seconds</option>
+                                <option value="60">1 minute</option>
+                                <option value="300">5 minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Notification Settings</h2>
+                </div>
+                <div class="card-content">
+                    <div class="settings-form">
+                        <div class="settings-group">
+                            <label for="email-address">Email address</label>
+                            <input type="email" id="email-address" class="settings-input" value="user@example.com">
+                        </div>
+                        <div class="settings-group">
+                            <label for="phone-number">Phone number</label>
+                            <input type="tel" id="phone-number" class="settings-input" value="+1234567890">
+                        </div>
+                        <div class="settings-group">
+                            <label for="notification-level">Notification level</label>
+                            <select id="notification-level" class="settings-input">
+                                <option value="all">All events</option>
+                                <option value="important" selected>Important events only</option>
+                                <option value="critical">Critical events only</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements - Devices Page
+        const scanButton = document.getElementById('scan-button');
+        const connectedDevicesCount = document.getElementById('connected-devices-count');
+        const totalDevicesCount = document.getElementById('total-devices-count');
+        const totalScansCount = document.getElementById('total-scans-count');
+        const lastScanTime = document.getElementById('last-scan-time');
+        const devicesContainer = document.getElementById('devices-container');
+        const historyContainer = document.getElementById('history-container');
+
+        // DOM Elements - Dashboard Page
+        const dashboardRefreshButton = document.getElementById('dashboard-refresh-button');
+        const dashboardConnectedCount = document.getElementById('dashboard-connected-count');
+        const dashboardTotalCount = document.getElementById('dashboard-total-count');
+        const dashboardScansCount = document.getElementById('dashboard-scans-count');
+        const dashboardLastScan = document.getElementById('dashboard-last-scan');
+
+        // DOM Elements - Scans Page
+        const newScanButton = document.getElementById('new-scan-button');
+
+        // DOM Elements - Alerts Page
+        const clearAlertsButton = document.getElementById('clear-alerts-button');
+
+        // DOM Elements - Settings Page
+        const saveSettingsButton = document.getElementById('save-settings-button');
+
+        // Variables
+        let autoRefreshInterval;
+        let devices = [];
+        let history = [];
+
+        // API base URL - change this to match your Flask server
+        const API_BASE_URL = 'http://localhost:5000/api';
+
+        // Function to scan USB devices (real)
+        async function scanUsbDevices() {
+            try {
+                // Show loading state
+                devicesContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Scanning USB ports...</div>
+                    </div>
+                `;
+
+                // Fetch data from the Flask API
+                const response = await fetch(`${API_BASE_URL}/scan`);
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update variables
+                devices = data.devices;
+                history = data.history;
+
+                // Update UI
+                updateStats(data);
+                updateDevicesUI();
+                updateHistoryUI();
+
+                return true;
+            } catch (error) {
+                console.error('Error scanning USB devices:', error);
+
+                // Show error message
+                devicesContainer.innerHTML = `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt">!</div>
+                        <div class="terminal-message error-message">Error scanning USB devices: ${error.message}</div>
+                    </div>
+                    <div class="terminal-line">
+                        <div class="terminal-prompt"></div>
+                        <div class="terminal-message-secondary">Make sure the Flask server is running at ${API_BASE_URL}</div>
+                    </div>
+                    <div class="terminal-line">
+                        <div class="terminal-prompt">></div>
+                        <div class="terminal-message">To start the server, run: python app.py</div>
+                    </div>
+                `;
+
+                // Fall back to simulated data if API fails
+                if (confirm("API connection failed. Would you like to use simulated data instead?")) {
+                    return useSimulatedData();
+                }
+
+                return false;
+            }
+        }
+
+        // Function to use simulated data as fallback
+        async function useSimulatedData() {
+            try {
+                // Generate simulated data
+                const simulatedData = {
+                    devices: [
+                        {
+                            name: "Kingston DataTraveler",
+                            id: "VID_0951&PID_1666_sim1",
+                            drive_letter: "E:",
+                            size: "16GB",
+                            free_space: "8.5GB",
+                            connection_time: new Date().toLocaleString()
+                        },
+                        {
+                            name: "Seagate External HDD",
+                            id: "VID_0BC2&PID_2312_sim2",
+                            drive_letter: "F:",
+                            size: "1TB",
+                            free_space: "450GB",
+                            connection_time: new Date().toLocaleString()
+                        }
+                    ],
+                    history: [
+                        {
+                            device_name: "Kingston DataTraveler",
+                            device_id: "VID_0951&PID_1666_sim1",
+                            event_type: "connected",
+                            timestamp: new Date().toLocaleString()
+                        },
+                        {
+                            device_name: "Seagate External HDD",
+                            device_id: "VID_0BC2&PID_2312_sim2",
+                            event_type: "connected",
+                            timestamp: new Date(Date.now() - 3600000).toLocaleString()
+                        },
+                        {
+                            device_name: "SanDisk Ultra",
+                            device_id: "VID_0781&PID_5581_sim3",
+                            event_type: "disconnected",
+                            timestamp: new Date(Date.now() - 7200000).toLocaleString()
+                        }
+                    ],
+                    scan_count: 1,
+                    scan_time: new Date().toLocaleString()
+                };
+
+                // Update variables
+                devices = simulatedData.devices;
+                history = simulatedData.history;
+
+                // Update UI
+                updateStats(simulatedData);
+                updateDevicesUI();
+                updateHistoryUI();
+
+                return true;
+            } catch (error) {
+                console.error('Error generating simulated data:', error);
+                return false;
+            }
+        }
+
+        // Function to update statistics
+        function updateStats(data) {
+            // Update devices page stats
+            connectedDevicesCount.textContent = devices.length;
+            totalDevicesCount.textContent = new Set(history.map(h => h.device_id)).size;
+            totalScansCount.textContent = data.scan_count;
+            lastScanTime.textContent = data.scan_time.split(' ')[1]; // Show only the time part
+
+            // Update dashboard page stats
+            dashboardConnectedCount.textContent = devices.length;
+            dashboardTotalCount.textContent = new Set(history.map(h => h.device_id)).size;
+            dashboardScansCount.textContent = data.scan_count;
+            dashboardLastScan.textContent = data.scan_time.split(' ')[1]; // Show only the time part
+        }
+
+        // Function to update devices UI
+        function updateDevicesUI() {
+            if (devices.length === 0) {
+                devicesContainer.innerHTML = `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt">></div>
+                        <div class="terminal-message">No USB devices currently connected</div>
+                    </div>
+                    <div class="terminal-line">
+                        <div class="terminal-prompt"></div>
+                        <div class="terminal-message-secondary">Connect a USB device to your computer to see it here</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            for (const device of devices) {
+                html += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt">></div>
+                        <div class="terminal-message">${device.name} | ID: ${device.id.substring(0, 20)}...</div>
+                    </div>
+                `;
+
+                // Add additional details if available
+                if (device.drive_letter) {
+                    html += `
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <div class="terminal-message-secondary">Drive: ${device.drive_letter} | Size: ${device.size} | Free: ${device.free_space}</div>
+                        </div>
+                    `;
+                }
+
+                // Add connection time
+                html += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt"></div>
+                        <div class="terminal-message-secondary">Connected: ${device.connection_time}</div>
+                    </div>
+                `;
+
+                // Add scan button if drive letter is available
+                if (device.drive_letter) {
+                    html += `
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <button class="scan-device-button" data-drive="${device.drive_letter}">
+                                Scan for Malware
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Add separator except for the last device
+                if (device !== devices[devices.length - 1]) {
+                    html += `<div class="device-separator"></div>`;
+                }
+            }
+
+            devicesContainer.innerHTML = html;
+
+            // Add event listeners to scan buttons
+            document.querySelectorAll('.scan-device-button').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const drivePath = button.getAttribute('data-drive');
+                    await scanDriveForMalware(drivePath);
+                });
+            });
+        }
+
+        // Function to scan a drive for malware
+        async function scanDriveForMalware(drivePath) {
+            try {
+                // Show loading state
+                const scanHistoryContainer = document.getElementById('scan-history-container');
+                if (scanHistoryContainer) {
+                    scanHistoryContainer.innerHTML = `
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <div>Scanning drive ${drivePath} for malware...</div>
+                        </div>
+                    `;
+                }
+
+                // Call the API to scan the drive
+                const response = await fetch(`${API_BASE_URL}/scan-device`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ drive_path: drivePath })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update the scan history UI
+                updateScanHistoryUI(data.scan_result, drivePath);
+
+                // Switch to the Scans page
+                const scansBtn = document.getElementById('scans-btn');
+                if (scansBtn) {
+                    scansBtn.click();
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Error scanning drive:', error);
+
+                // Show error message
+                const scanHistoryContainer = document.getElementById('scan-history-container');
+                if (scanHistoryContainer) {
+                    scanHistoryContainer.innerHTML = `
+                        <div class="terminal-line">
+                            <div class="terminal-prompt">!</div>
+                            <div class="terminal-message error-message">Error scanning drive: ${error.message}</div>
+                        </div>
+                    `;
+                }
+
+                return false;
+            }
+        }
+
+        // Function to update scan history UI
+        function updateScanHistoryUI(scanResult, drivePath) {
+            const scanHistoryContainer = document.getElementById('scan-history-container');
+            if (!scanHistoryContainer) return;
+
+            let html = '';
+
+            // Add scan summary
+            html += `
+                <div class="terminal-line">
+                    <div class="terminal-prompt">></div>
+                    <div class="terminal-message">Scan completed for ${drivePath}</div>
+                </div>
+                <div class="terminal-line">
+                    <div class="terminal-prompt"></div>
+                    <div class="terminal-message-secondary">Scanned ${scanResult.scanned_files} files | Status: ${scanResult.status}</div>
+                </div>
+                <div class="terminal-line">
+                    <div class="terminal-prompt"></div>
+                    <div class="terminal-message-secondary">Start: ${scanResult.start_time} | End: ${scanResult.end_time}</div>
+                </div>
+            `;
+
+            // Add malicious files
+            if (scanResult.malicious_files && scanResult.malicious_files.length > 0) {
+                html += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt disconnected">!</div>
+                        <div class="terminal-message error-message">Malicious files detected: ${scanResult.malicious_files.length}</div>
+                    </div>
+                `;
+
+                scanResult.malicious_files.forEach(file => {
+                    html += `
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <div class="terminal-message-secondary">File: ${file.path}</div>
+                        </div>
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <div class="terminal-message-secondary">Threat: ${file.threat} | Hash: ${file.hash}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt connected">✓</div>
+                        <div class="terminal-message">No malicious files detected</div>
+                    </div>
+                `;
+            }
+
+            // Add suspicious files
+            if (scanResult.suspicious_files && scanResult.suspicious_files.length > 0) {
+                html += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt">!</div>
+                        <div class="terminal-message">Suspicious files detected: ${scanResult.suspicious_files.length}</div>
+                    </div>
+                `;
+
+                scanResult.suspicious_files.forEach(file => {
+                    html += `
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <div class="terminal-message-secondary">File: ${file.path}</div>
+                        </div>
+                        <div class="terminal-line">
+                            <div class="terminal-prompt"></div>
+                            <div class="terminal-message-secondary">Reason: ${file.reason}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `<div class="device-separator"></div>`;
+
+            scanHistoryContainer.innerHTML = html;
+        }
+
+        // Function to update history UI
+        function updateHistoryUI() {
+            if (history.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt">></div>
+                        <div class="terminal-message">No connection history available</div>
+                    </div>
+                    <div class="terminal-line">
+                        <div class="terminal-prompt"></div>
+                        <div class="terminal-message-secondary">Connect or disconnect USB devices to see history</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            for (const entry of history) {
+                const isConnected = entry.event_type === 'connected';
+                const symbol = isConnected ? '✓' : '✗';
+                const colorClass = isConnected ? 'connected' : 'disconnected';
+
+                html += `
+                    <div class="terminal-line">
+                        <div class="terminal-prompt ${colorClass}">${symbol}</div>
+                        <div class="terminal-message">${entry.device_name} ${isConnected ? 'connected' : 'disconnected'} at ${entry.timestamp}</div>
+                    </div>
+                `;
+            }
+
+            historyContainer.innerHTML = html;
+        }
+
+        // Function to set up auto-refresh
+        function setupAutoRefresh() {
+            // Set up auto-refresh every 30 seconds
+            autoRefreshInterval = setInterval(scanUsbDevices, 30000);
+        }
+
+        // Function to create network animation
+        function createNetworkAnimation() {
+            const container = document.getElementById('network-container');
+            const nodeCount = 10; // Reduced from 20 to 10
+            const nodes = [];
+
+            // Create nodes
+            for (let i = 0; i < nodeCount; i++) {
+                const node = document.createElement('div');
+                node.className = 'network-node';
+
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+
+                // Use CSS custom properties instead of inline styles
+                node.style.setProperty('--x-pos', `${x}px`);
+                node.style.setProperty('--y-pos', `${y}px`);
+
+                container.appendChild(node);
+                nodes.push({ element: node, x, y });
+            }
+
+            // Create connections between nodes
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    if (Math.random() > 0.7) continue;
+
+                    const line = document.createElement('div');
+                    line.className = 'network-line';
+
+                    const dx = nodes[j].x - nodes[i].x;
+                    const dy = nodes[j].y - nodes[i].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+
+                    // Use CSS custom properties instead of inline styles
+                    line.style.setProperty('--width', `${distance}px`);
+                    line.style.setProperty('--x-pos', `${nodes[i].x}px`);
+                    line.style.setProperty('--y-pos', `${nodes[i].y}px`);
+                    line.style.setProperty('--rotation', `${angle}rad`);
+
+                    container.appendChild(line);
+                }
+            }
+        }
+
+        // Navigation functionality
+        function setupNavigation() {
+            const dashboardBtn = document.getElementById('dashboard-btn');
+            const devicesBtn = document.getElementById('devices-btn');
+            const scansBtn = document.getElementById('scans-btn');
+            const alertsBtn = document.getElementById('alerts-btn');
+            const settingsBtn = document.getElementById('settings-btn');
+
+            // Page content containers
+            const dashboardPage = document.getElementById('dashboard-page');
+            const devicesPage = document.getElementById('devices-page');
+            const scansPage = document.getElementById('scans-page');
+            const alertsPage = document.getElementById('alerts-page');
+            const settingsPage = document.getElementById('settings-page');
+
+            // Function to show a specific page and hide others
+            const showPage = (pageToShow) => {
+                // Hide all pages
+                [dashboardPage, devicesPage, scansPage, alertsPage, settingsPage].forEach(page => {
+                    if (page) page.style.display = 'none';
+                });
+
+                // Show the selected page
+                if (pageToShow) pageToShow.style.display = 'block';
+            };
+
+            // Add active class to the current button
+            const setActiveButton = (button) => {
+                // Remove active class from all buttons
+                [dashboardBtn, devicesBtn, scansBtn, alertsBtn, settingsBtn].forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // Add active class to the clicked button
+                button.classList.add('active');
+            };
+
+            // Set devices as active by default and show devices page
+            showPage(devicesPage);
+
+            // Add click event listeners
+            dashboardBtn.addEventListener('click', () => {
+                setActiveButton(dashboardBtn);
+                showPage(dashboardPage);
+                document.title = "Dashboard - USB Monitoring System";
+                console.log('Dashboard view activated');
+            });
+
+            devicesBtn.addEventListener('click', () => {
+                setActiveButton(devicesBtn);
+                showPage(devicesPage);
+                document.title = "Devices - USB Monitoring System";
+                console.log('Devices view activated');
+            });
+
+            scansBtn.addEventListener('click', () => {
+                setActiveButton(scansBtn);
+                showPage(scansPage);
+                document.title = "Scans - USB Monitoring System";
+                console.log('Scans view activated');
+            });
+
+            alertsBtn.addEventListener('click', () => {
+                setActiveButton(alertsBtn);
+                showPage(alertsPage);
+                document.title = "Alerts - USB Monitoring System";
+                console.log('Alerts view activated');
+            });
+
+            settingsBtn.addEventListener('click', () => {
+                setActiveButton(settingsBtn);
+                showPage(settingsPage);
+                document.title = "Settings - USB Monitoring System";
+                console.log('Settings view activated');
+            });
+        }
+
+        // Event Listeners - Devices Page
+        scanButton.addEventListener('click', scanUsbDevices);
+
+        // Event Listeners - Dashboard Page
+        dashboardRefreshButton.addEventListener('click', scanUsbDevices);
+
+        // Event Listeners - Scans Page
+        newScanButton.addEventListener('click', async () => {
+            console.log('Starting new scan...');
+
+            // First refresh the device list
+            await scanUsbDevices();
+
+            // If we have devices with drive letters, show a prompt to select one
+            const drivesAvailable = devices.filter(d => d.drive_letter);
+
+            if (drivesAvailable.length === 0) {
+                alert('No USB drives available to scan. Please connect a USB drive first.');
+                return;
+            }
+
+            // If only one drive, scan it directly
+            if (drivesAvailable.length === 1) {
+                await scanDriveForMalware(drivesAvailable[0].drive_letter);
+                return;
+            }
+
+            // If multiple drives, ask which one to scan
+            let message = 'Select a drive to scan:\n\n';
+            drivesAvailable.forEach((drive, index) => {
+                message += `${index + 1}. ${drive.name} (${drive.drive_letter})\n`;
+            });
+
+            const selection = prompt(message);
+
+            if (selection === null) return; // User cancelled
+
+            const selectedIndex = parseInt(selection) - 1;
+
+            if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= drivesAvailable.length) {
+                alert('Invalid selection. Please try again.');
+                return;
+            }
+
+            await scanDriveForMalware(drivesAvailable[selectedIndex].drive_letter);
+        });
+
+        // Event Listeners - Alerts Page
+        clearAlertsButton.addEventListener('click', () => {
+            console.log('Clearing alerts...');
+            document.getElementById('alerts-container').innerHTML = `
+                <div class="terminal-line">
+                    <div class="terminal-prompt">></div>
+                    <div class="terminal-message">All alerts have been cleared</div>
+                </div>
+                <div class="terminal-line">
+                    <div class="terminal-prompt"></div>
+                    <div class="terminal-message-secondary">No active alerts in the system</div>
+                </div>
+            `;
+        });
+
+        // Event Listeners - Settings Page
+        saveSettingsButton.addEventListener('click', () => {
+            console.log('Saving settings...');
+            alert('Settings saved successfully!');
+        });
+
+        // Function to create horizontal scanning animation
+        function createHorizontalScanAnimation() {
+            const container = document.getElementById('horizontal-scan-container');
+
+            // Create 3 scan lines with different delays
+            for (let i = 0; i < 3; i++) {
+                const scanLine = document.createElement('div');
+                scanLine.className = 'scan-line';
+
+                // Set different animation delays for each line
+                scanLine.style.animationDelay = `${i * 1.5}s`;
+
+                container.appendChild(scanLine);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Create network animation
+            createNetworkAnimation();
+
+            // Create horizontal scan animation
+            createHorizontalScanAnimation();
+
+            // Setup navigation
+            setupNavigation();
+
+            // Initial scan
+            const success = await scanUsbDevices();
+
+            // Set up auto-refresh if initial scan was successful
+            if (success) {
+                setupAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>

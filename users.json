@@ -1,0 +1,25 @@
+{
+    "users": {
+        "admin": {
+            "username": "admin",
+            "email": "admin@example.com",
+            "role": "admin",
+            "is_active": true,
+            "last_login": "2025-05-07 11:25:10",
+            "created_at": "2025-04-28 14:02:08",
+            "permissions": {
+                "scan_devices": true,
+                "block_devices": true,
+                "manage_users": true,
+                "view_history": true,
+                "update_database": true,
+                "change_settings": true,
+                "export_data": true,
+                "view_logs": true
+            }
+        }
+    },
+    "password_hashes": {
+        "admin": "f865c15b86d3a91c33e05aaacbec11f5$c8c92cae18e4a476f7ac9aa4711962006edd6823f8030033a3b03e4818f5b437"
+    }
+}

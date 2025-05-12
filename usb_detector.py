@@ -1,376 +1,712 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+USB Detector Module
+Handles detection of USB devices and monitoring for new connections/disconnections
+"""
+
 import os
 import platform
-import subprocess
-import re
-import json
+import datetime
+import ctypes
+import string
+from PyQt5.QtCore import QObject, pyqtSignal
 
-# Import pyudev only on Linux
-if platform.system() == 'Linux':
+# Import platform-specific modules
+if platform.system() == "Windows":
+    import win32com.client
+    import wmi
+elif platform.system() == "Linux":
     import pyudev
 
-def get_connected_devices():
-    """
-    Get information about all connected USB devices.
-    Returns a dictionary with device_id as key and device info as value.
-    """
-    if platform.system() == 'Windows':
-        return get_connected_devices_windows()
-    elif platform.system() == 'Linux':
-        return get_connected_devices_linux()
-    elif platform.system() == 'Darwin':  # macOS
-        return get_connected_devices_macos()
-    else:
-        raise NotImplementedError(f"USB detection not implemented for {platform.system()}")
+class USBDevice:
+    """Class representing a USB device"""
+    def __init__(self, device_id, name, drive_letter=None, size=None, free_space=None):
+        self.id = device_id
+        self.name = name
+        self.drive_letter = drive_letter
+        self.size = size
+        self.free_space = free_space
+        self.connection_time = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        self.permission = "read_only"  # Default permission
+        self.status = "active"
+        self.last_scan_time = None
+        self.scan_result = None
 
-def get_connected_devices_windows():
-    """Get connected USB devices on Windows"""
-    devices = {}
+        # Enhanced device information
+        self.vendor_id = ""
+        self.product_id = ""
+        self.serial_number = ""
+        self.manufacturer = ""
+        self.product = ""
+        self.device_type = "unknown"  # storage, hid, camera, etc.
+        self.interface_type = ""      # USB 2.0, USB 3.0, etc.
+        self.is_trusted = False
+        self.first_seen = self.connection_time
+        self.connection_count = 1
+        self.last_scan_result = None
+        self.hardware_ids = []
+        self.compatible_ids = []
+        self.file_system = ""
+        self.is_encrypted = False
+        self.is_write_protected = False
+        self.is_removable = True
+        self.is_hotpluggable = True
+        self.icon_path = ""
 
-    try:
-        # Use a simpler approach to list drives
-        result = subprocess.run(["cmd", "/c", "fsutil fsinfo drives"],
-                               capture_output=True, text=True, check=True)
+    def to_dict(self):
+        """Convert device to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "drive_letter": self.drive_letter,
+            "size": self.size,
+            "free_space": self.free_space,
+            "connection_time": self.connection_time,
+            "permission": self.permission,
+            "status": self.status,
+            "last_scan_time": self.last_scan_time,
+            "scan_result": self.scan_result,
+            "vendor_id": self.vendor_id,
+            "product_id": self.product_id,
+            "serial_number": self.serial_number,
+            "manufacturer": self.manufacturer,
+            "product": self.product,
+            "device_type": self.device_type,
+            "interface_type": self.interface_type,
+            "is_trusted": self.is_trusted,
+            "first_seen": self.first_seen,
+            "connection_count": self.connection_count,
+            "hardware_ids": self.hardware_ids,
+            "compatible_ids": self.compatible_ids,
+            "file_system": self.file_system,
+            "is_encrypted": self.is_encrypted,
+            "is_write_protected": self.is_write_protected,
+            "is_removable": self.is_removable,
+            "is_hotpluggable": self.is_hotpluggable
+        }
 
-        # Parse the output to find all drives
-        output = result.stdout.strip()
-        if "Drives: " in output:
-            drives = output.split("Drives: ")[1].split()
+    def get_device_icon(self):
+        """Get the appropriate icon for this device type"""
+        if self.device_type == "storage":
+            return "assets/icons/usb_storage.png"
+        elif self.device_type == "hid":
+            return "assets/icons/usb_hid.png"
+        elif self.device_type == "camera":
+            return "assets/icons/usb_camera.png"
+        elif self.device_type == "printer":
+            return "assets/icons/usb_printer.png"
+        elif self.device_type == "audio":
+            return "assets/icons/usb_audio.png"
+        elif self.device_type == "network":
+            return "assets/icons/usb_network.png"
+        else:
+            return "assets/icons/usb_generic.png"
 
-            for drive in drives:
-                # Skip C: drive (system drive)
-                if drive.upper() == "C:":
-                    continue
+class USBDetector(QObject):
+    """Class for detecting and monitoring USB devices"""
+    # Define signals
+    device_connected = pyqtSignal(USBDevice)
+    device_disconnected = pyqtSignal(str)  # device_id
 
-                # Get drive type
-                try:
-                    type_result = subprocess.run(["cmd", "/c", f"fsutil fsinfo drivetype {drive}"],
-                                            capture_output=True, text=True, check=True)
+    def __init__(self):
+        super().__init__()
+        self.devices = {}  # Dictionary of connected devices
+        self.system = platform.system()
 
-                    drive_type = type_result.stdout.strip()
+    def get_connected_devices(self):
+        """Get list of currently connected USB devices"""
+        if self.system == "Windows":
+            return self._get_windows_devices()
+        elif self.system == "Linux":
+            return self._get_linux_devices()
+        elif self.system == "Darwin":  # macOS
+            return self._get_macos_devices()
+        else:
+            return []
 
-                    # Only include removable drives
-                    if "Removable Drive" in drive_type:
-                        device_id = f"DRIVE_{drive.replace(':', '')}"
+    def _get_windows_devices(self):
+        """Get USB devices on Windows with enhanced information"""
+        devices = []
+        device_history = self._load_device_history()
 
-                        # Try to get volume label
-                        try:
-                            vol_result = subprocess.run(["cmd", "/c", f"vol {drive}"],
-                                                capture_output=True, text=True, check=True)
-                            vol_output = vol_result.stdout.strip()
+        try:
+            # Try using WMI first
+            c = wmi.WMI()
 
-                            product_name = "Removable Storage"
-                            if "Volume in drive" in vol_output and "is" in vol_output:
-                                parts = vol_output.split("is")
-                                if len(parts) > 1:
-                                    label = parts[1].strip()
-                                    if label and label != "":
-                                        product_name = label
-                        except:
-                            product_name = f"Removable Drive ({drive})"
+            # Get all USB controllers to determine USB version
+            usb_controllers = {}
+            for controller in c.Win32_USBController():
+                usb_controllers[controller.DeviceID] = controller.Name
 
-                        device_info = {
-                            'device_id': device_id,
-                            'vendor_id': None,
-                            'product_id': None,
-                            'manufacturer': 'USB Device',
-                            'product_name': product_name,
-                            'serial_number': None,
-                            'mount_point': drive
-                        }
+            # Get USB drives
+            for disk in c.Win32_DiskDrive():
+                if "USB" in disk.InterfaceType:
+                    device_id = disk.PNPDeviceID
 
-                        devices[device_id] = device_info
-                except:
-                    # If we can't get drive type, skip this drive
-                    continue
+                    # Create basic device
+                    device = USBDevice(
+                        device_id=device_id,
+                        name=disk.Model.strip() if disk.Model else "Unknown USB Storage",
+                    )
 
-        # Try another method if no devices found
-        if not devices:
+                    # Set device type
+                    device.device_type = "storage"
+
+                    # Get more details about the device
+                    try:
+                        for partition in c.Win32_DiskPartition():
+                            if partition.DiskIndex == disk.Index:
+                                try:
+                                    for logical_disk in c.Win32_LogicalDiskToPartition():
+                                        try:
+                                            antecedent_parts = logical_disk.Antecedent.split('=')
+                                            if len(antecedent_parts) > 1:
+                                                antecedent_value = antecedent_parts[1].strip('"\'')
+                                                if antecedent_value == partition.DeviceID:
+                                                    dependent_parts = logical_disk.Dependent.split('=')
+                                                    if len(dependent_parts) > 1:
+                                                        drive_letter = dependent_parts[1].strip('"\'')
+
+                                                        # Get drive information
+                                                        for drive in c.Win32_LogicalDisk():
+                                                            if drive.DeviceID == drive_letter:
+                                                                # Convert bytes to GB
+                                                                size = int(drive.Size) / (1024**3) if drive.Size else 0
+                                                                free_space = int(drive.FreeSpace) / (1024**3) if drive.FreeSpace else 0
+
+                                                                device.drive_letter = drive_letter
+                                                                device.size = f"{size:.1f}GB"
+                                                                device.free_space = f"{free_space:.1f}GB"
+                                                                device.file_system = drive.FileSystem
+                                        except Exception as e:
+                                            # Skip this logical disk if there's an error
+                                            continue
+                                except Exception as e:
+                                    # Skip this partition's logical disks if there's an error
+                                    continue
+                    except Exception as e:
+                        # Skip partition processing if there's an error
+                        print(f"Error processing partitions: {str(e)}")
+
+                    # Get USB device details from PnP entity
+                    for pnp_entity in c.Win32_PnPEntity():
+                        if pnp_entity.DeviceID == device_id:
+                            # Extract vendor and product IDs from device ID
+                            if "VID_" in device_id and "PID_" in device_id:
+                                vid_start = device_id.find("VID_") + 4
+                                pid_start = device_id.find("PID_") + 4
+                                device.vendor_id = device_id[vid_start:vid_start+4]
+                                device.product_id = device_id[pid_start:pid_start+4]
+
+                            # Get manufacturer and product name
+                            device.manufacturer = pnp_entity.Manufacturer if pnp_entity.Manufacturer else ""
+                            device.product = pnp_entity.Name if pnp_entity.Name else ""
+
+                            # Get hardware IDs
+                            if pnp_entity.HardwareID:
+                                device.hardware_ids = list(pnp_entity.HardwareID)
+
+                            # Get compatible IDs
+                            if pnp_entity.CompatibleID:
+                                device.compatible_ids = list(pnp_entity.CompatibleID)
+
+                            # Determine USB version from controller
+                            for controller_id, controller_name in usb_controllers.items():
+                                if controller_id in device_id:
+                                    if "3.0" in controller_name:
+                                        device.interface_type = "USB 3.0"
+                                    elif "2.0" in controller_name:
+                                        device.interface_type = "USB 2.0"
+                                    else:
+                                        device.interface_type = "USB"
+                                    break
+
+                    # Check if device is write-protected
+                    device.is_write_protected = not disk.Capabilities or 4 not in disk.Capabilities
+
+                    # Update device history information
+                    if device_id in device_history:
+                        history = device_history[device_id]
+                        device.first_seen = history.get("first_seen", device.connection_time)
+                        device.connection_count = history.get("connection_count", 0) + 1
+                        device.is_trusted = history.get("is_trusted", False)
+
+                    devices.append(device)
+
+            # Get all USB devices (not just storage)
+            if not devices:
+                # Get USB hubs and controllers
+                for usb in c.Win32_USBHub():
+                    # Skip root hubs
+                    if "ROOT_HUB" in usb.DeviceID:
+                        continue
+
+                    device = USBDevice(
+                        device_id=usb.DeviceID,
+                        name=usb.Description.strip() if usb.Description else "USB Device"
+                    )
+
+                    # Extract vendor and product IDs from device ID
+                    if "VID_" in usb.DeviceID and "PID_" in usb.DeviceID:
+                        vid_start = usb.DeviceID.find("VID_") + 4
+                        pid_start = usb.DeviceID.find("PID_") + 4
+                        device.vendor_id = usb.DeviceID[vid_start:vid_start+4]
+                        device.product_id = usb.DeviceID[pid_start:pid_start+4]
+
+                    # Determine device type based on class codes
+                    for pnp_entity in c.Win32_PnPEntity():
+                        if pnp_entity.DeviceID == usb.DeviceID:
+                            # Get hardware IDs
+                            if pnp_entity.HardwareID:
+                                device.hardware_ids = list(pnp_entity.HardwareID)
+
+                                # Determine device type from hardware ID
+                                hw_id = device.hardware_ids[0] if device.hardware_ids else ""
+                                if "USB\\Class_03" in hw_id:
+                                    device.device_type = "hid"
+                                elif "USB\\Class_06" in hw_id:
+                                    device.device_type = "camera"
+                                elif "USB\\Class_07" in hw_id:
+                                    device.device_type = "printer"
+                                elif "USB\\Class_08" in hw_id:
+                                    device.device_type = "storage"
+                                elif "USB\\Class_01" in hw_id:
+                                    device.device_type = "audio"
+                                elif "USB\\Class_09" in hw_id:
+                                    device.device_type = "hub"
+                                elif "USB\\Class_0E" in hw_id:
+                                    device.device_type = "video"
+                                elif "USB\\Class_0A" in hw_id:
+                                    device.device_type = "cdc"
+                                elif "USB\\Class_02" in hw_id:
+                                    device.device_type = "network"
+                                else:
+                                    device.device_type = "unknown"
+
+                            # Get compatible IDs
+                            if pnp_entity.CompatibleID:
+                                device.compatible_ids = list(pnp_entity.CompatibleID)
+
+                            # Get manufacturer and product name
+                            device.manufacturer = pnp_entity.Manufacturer if pnp_entity.Manufacturer else ""
+                            device.product = pnp_entity.Name if pnp_entity.Name else ""
+
+                    # Update device history information
+                    if usb.DeviceID in device_history:
+                        history = device_history[usb.DeviceID]
+                        device.first_seen = history.get("first_seen", device.connection_time)
+                        device.connection_count = history.get("connection_count", 0) + 1
+                        device.is_trusted = history.get("is_trusted", False)
+
+                    devices.append(device)
+
+        except Exception as e:
+            print(f"Error in WMI detection: {str(e)}")
+            # Fallback to basic method
             try:
-                # Use another command to get USB device information
-                result = subprocess.run(["cmd", "/c", "wmic diskdrive where InterfaceType='USB' get Model,Size,Status /format:list"],
-                                      capture_output=True, text=True, check=True)
+                # Get available drives
+                drives = []
+                bitmask = ctypes.windll.kernel32.GetLogicalDrives()
+                for letter in string.ascii_uppercase:
+                    if bitmask & 1:
+                        drives.append(letter)
+                    bitmask >>= 1
 
-                output = result.stdout
-                drive_sections = output.strip().split('\n\n')
+                # Check if drives are removable (likely USB)
+                for drive in drives:
+                    drive_path = f"{drive}:\\"
+                    drive_type = ctypes.windll.kernel32.GetDriveTypeW(drive_path)
+                    # 2 = DRIVE_REMOVABLE
+                    if drive_type == 2:
+                        try:
+                            # Check if drive is accessible
+                            if not os.path.exists(drive_path):
+                                continue
 
-                for i, section in enumerate(drive_sections):
-                    if not section.strip():
-                        continue
+                            # Get drive info using GetDiskFreeSpaceEx
+                            free_bytes = ctypes.c_ulonglong(0)
+                            total_bytes = ctypes.c_ulonglong(0)
+                            ctypes.windll.kernel32.GetDiskFreeSpaceExW(
+                                ctypes.c_wchar_p(drive_path),
+                                None,
+                                ctypes.byref(total_bytes),
+                                ctypes.byref(free_bytes)
+                            )
 
-                    device_info = {
-                        'device_id': f"USB_DRIVE_{i}",
-                        'vendor_id': None,
-                        'product_id': None,
-                        'manufacturer': 'USB Device',
-                        'product_name': 'USB Storage',
-                        'serial_number': None,
-                        'mount_point': None
-                    }
+                            # Get volume information
+                            volume_name_buffer = ctypes.create_unicode_buffer(1024)
+                            file_system_name_buffer = ctypes.create_unicode_buffer(1024)
+                            ctypes.windll.kernel32.GetVolumeInformationW(
+                                ctypes.c_wchar_p(drive_path),
+                                volume_name_buffer,
+                                ctypes.sizeof(volume_name_buffer),
+                                None,
+                                None,
+                                None,
+                                file_system_name_buffer,
+                                ctypes.sizeof(file_system_name_buffer)
+                            )
 
-                    lines = section.strip().split('\n')
-                    for line in lines:
-                        if '=' not in line:
-                            continue
+                            # Convert to GB
+                            total_gb = total_bytes.value / (1024**3)
+                            free_gb = free_bytes.value / (1024**3)
 
-                        key, value = line.split('=', 1)
-                        key = key.strip()
-                        value = value.strip()
+                            device_id = f"DRIVE_{drive}"
+                            device_name = volume_name_buffer.value if volume_name_buffer.value else f"Removable Drive ({drive}:)"
 
-                        if key == 'Model' and value:
-                            device_info['product_name'] = value
-                            # Try to extract manufacturer from model name
-                            parts = value.split()
-                            if parts:
-                                device_info['manufacturer'] = parts[0]
+                            device = USBDevice(
+                                device_id=device_id,
+                                name=device_name,
+                                drive_letter=drive_path,
+                                size=f"{total_gb:.1f}GB",
+                                free_space=f"{free_gb:.1f}GB"
+                            )
 
-                    if device_info['product_name'] != 'USB Storage':
-                        devices[device_info['device_id']] = device_info
+                            device.device_type = "storage"
+                            device.file_system = file_system_name_buffer.value
+
+                            # Update device history information
+                            if device_id in device_history:
+                                history = device_history[device_id]
+                                device.first_seen = history.get("first_seen", device.connection_time)
+                                device.connection_count = history.get("connection_count", 0) + 1
+                                device.is_trusted = history.get("is_trusted", False)
+
+                            devices.append(device)
+                        except Exception as e:
+                            print(f"Error getting drive info: {str(e)}")
+                            # If we can't get size info, just add the drive
+                            device_id = f"DRIVE_{drive}"
+                            device = USBDevice(
+                                device_id=device_id,
+                                name=f"Removable Drive ({drive}:)",
+                                drive_letter=drive_path
+                            )
+                            device.device_type = "storage"
+
+                            # Update device history information
+                            if device_id in device_history:
+                                history = device_history[device_id]
+                                device.first_seen = history.get("first_seen", device.connection_time)
+                                device.connection_count = history.get("connection_count", 0) + 1
+                                device.is_trusted = history.get("is_trusted", False)
+
+                            devices.append(device)
             except Exception as e:
-                print(f"Error in secondary USB detection: {e}")
+                print(f"Error in basic detection: {str(e)}")
 
-    except Exception as e:
-        print(f"Error getting USB devices: {e}")
+        # Update device history
+        self._update_device_history(devices)
 
-        # Fallback method using a simpler command
-        try:
-            # List drive letters
-            result = subprocess.run(["cmd", "/c", "fsutil fsinfo drives"],
-                                capture_output=True, text=True, check=True)
+        return devices
 
-            output = result.stdout.strip()
-            if "Drives: " in output:
-                drives = output.split("Drives: ")[1].split()
-
-                for i, drive in enumerate(drives):
-                    # Skip C: drive (system drive)
-                    if drive.upper() == "C:":
-                        continue
-
-                    # Get drive type
-                    type_result = subprocess.run(["cmd", "/c", f"fsutil fsinfo drivetype {drive}"],
-                                            capture_output=True, text=True, check=True)
-
-                    drive_type = type_result.stdout.strip()
-
-                    # Only include removable drives
-                    if "Removable Drive" in drive_type:
-                        device_info = {
-                            'device_id': f"DRIVE_{drive.replace(':', '')}",
-                            'vendor_id': None,
-                            'product_id': None,
-                            'manufacturer': 'USB Device',
-                            'product_name': f'Removable Drive ({drive})',
-                            'serial_number': None,
-                            'mount_point': drive
-                        }
-
-                        devices[device_info['device_id']] = device_info
-
-        except Exception as inner_e:
-            print(f"Error in fallback USB detection: {inner_e}")
-
-    # If still no devices found, add a dummy device for testing
-    if not devices and os.environ.get('DEBUG_MODE') == 'True':
-        devices['DUMMY_DEVICE'] = {
-            'device_id': 'DUMMY_DEVICE',
-            'vendor_id': '0000',
-            'product_id': '0000',
-            'manufacturer': 'Debug Manufacturer',
-            'product_name': 'Debug USB Device',
-            'serial_number': 'DEBUG123456',
-            'mount_point': 'D:'
-        }
-
-    return devices
-
-def get_device_info_windows(device_id):
-    """Get detailed information about a USB device on Windows"""
-    try:
-        # Get device details using PowerShell
-        cmd = f"Get-PnpDeviceProperty -InstanceId '{device_id}' | ConvertTo-Json"
-        result = subprocess.run(["powershell", "-Command", cmd],
-                               capture_output=True, text=True, check=True)
-
-        # Parse the JSON output
-        properties = json.loads(result.stdout)
-
-        # Extract relevant information
-        device_info = {
-            'device_id': device_id,
-            'vendor_id': None,
-            'product_id': None,
-            'manufacturer': None,
-            'product_name': None,
-            'serial_number': None,
-            'mount_point': None
-        }
-
-        # If only one property is returned, it won't be in a list
-        if not isinstance(properties, list):
-            properties = [properties]
-
-        for prop in properties:
-            key = prop.get("KeyName", "")
-            data = prop.get("Data")
-
-            if key == "DEVPKEY_Device_Manufacturer":
-                device_info['manufacturer'] = data
-            elif key == "DEVPKEY_Device_FriendlyName":
-                device_info['product_name'] = data
-            elif key == "DEVPKEY_Device_HardwareIds":
-                # Extract vendor and product IDs from hardware ID
-                if isinstance(data, list) and len(data) > 0:
-                    match = re.search(r'VID_([0-9A-F]{4})&PID_([0-9A-F]{4})', data[0])
-                    if match:
-                        device_info['vendor_id'] = match.group(1)
-                        device_info['product_id'] = match.group(2)
-
-        # Get drive letter for USB storage devices
-        cmd = "Get-WmiObject -Class Win32_DiskDrive | Where-Object {$_.InterfaceType -eq 'USB'} | " + \
-              "ForEach-Object {$drive = $_; Get-WmiObject -Class Win32_DiskDriveToDiskPartition | " + \
-              "Where-Object {$_.Antecedent -eq $drive.Path.Path} | " + \
-              "ForEach-Object {$partition = $_; Get-WmiObject -Class Win32_LogicalDiskToPartition | " + \
-              "Where-Object {$_.Antecedent -eq $partition.Dependent} | " + \
-              "ForEach-Object {$disk = $_; Get-WmiObject -Class Win32_LogicalDisk | " + \
-              "Where-Object {$_.Path.Path -eq $disk.Dependent}}}} | ConvertTo-Json"
-
-        result = subprocess.run(["powershell", "-Command", cmd],
-                               capture_output=True, text=True, check=False)
+    def _get_linux_devices(self):
+        """Get USB devices on Linux"""
+        devices = []
 
         try:
-            drives = json.loads(result.stdout)
+            context = pyudev.Context()
 
-            # If only one drive is returned, it won't be in a list
-            if not isinstance(drives, list):
-                drives = [drives]
+            for device in context.list_devices(subsystem='block', DEVTYPE='disk'):
+                if device.get('ID_BUS') == 'usb':
+                    name = device.get('ID_MODEL', 'Unknown USB Device')
+                    device_id = device.get('ID_SERIAL', 'Unknown ID')
 
-            for drive in drives:
-                if drive and 'DeviceID' in drive:
-                    device_info['mount_point'] = drive['DeviceID']
-                    break
-        except:
+                    # Try to get partition information
+                    partitions = [p for p in context.list_devices(subsystem='block', DEVTYPE='partition')
+                                 if p.parent == device]
+
+                    if partitions:
+                        for part in partitions:
+                            # Try to get mount point
+                            mount_point = None
+                            try:
+                                with open('/proc/mounts', 'r') as f:
+                                    for line in f:
+                                        if part.device_node in line:
+                                            mount_point = line.split()[1]
+                                            break
+                            except:
+                                pass
+
+                            # If mounted, get size information
+                            if mount_point:
+                                try:
+                                    import shutil
+                                    total, _, free = shutil.disk_usage(mount_point)
+                                    total_gb = total / (1024**3)
+                                    free_gb = free / (1024**3)
+
+                                    usb_device = USBDevice(
+                                        device_id=device_id,
+                                        name=name,
+                                        drive_letter=mount_point,
+                                        size=f"{total_gb:.1f}GB",
+                                        free_space=f"{free_gb:.1f}GB"
+                                    )
+                                    devices.append(usb_device)
+                                except:
+                                    usb_device = USBDevice(
+                                        device_id=device_id,
+                                        name=name,
+                                        drive_letter=mount_point
+                                    )
+                                    devices.append(usb_device)
+                    else:
+                        usb_device = USBDevice(
+                            device_id=device_id,
+                            name=name
+                        )
+                        devices.append(usb_device)
+        except Exception:
             pass
 
-        return device_info
+        return devices
 
-    except Exception as e:
-        print(f"Error getting device info: {e}")
-        return None
+    def _get_macos_devices(self):
+        """Get USB devices on macOS"""
+        devices = []
 
-def get_connected_devices_linux():
-    """Get connected USB devices on Linux using pyudev"""
-    devices = {}
+        try:
+            # Basic detection using /Volumes
+            volumes = os.listdir('/Volumes')
+            for volume in volumes:
+                # Skip the main drive
+                if volume != "Macintosh HD":
+                    volume_path = os.path.join('/Volumes', volume)
 
-    try:
-        context = pyudev.Context()
+                    # Get disk info if possible
+                    try:
+                        stat = os.statvfs(volume_path)
+                        total = stat.f_frsize * stat.f_blocks
+                        free = stat.f_frsize * stat.f_bavail
 
-        # Get all USB devices
-        for device in context.list_devices(subsystem='usb', DEVTYPE='usb_device'):
-            device_id = device.get('DEVPATH', '').split('/')[-1]
+                        # Convert to GB
+                        total_gb = total / (1024**3)
+                        free_gb = free / (1024**3)
 
-            # Skip USB hubs
-            if device.get('ID_MODEL', '').lower().find('hub') != -1:
-                continue
+                        usb_device = USBDevice(
+                            device_id=f"VOLUME_{volume}",
+                            name=volume,
+                            drive_letter=volume_path,
+                            size=f"{total_gb:.1f}GB",
+                            free_space=f"{free_gb:.1f}GB"
+                        )
+                        devices.append(usb_device)
+                    except:
+                        usb_device = USBDevice(
+                            device_id=f"VOLUME_{volume}",
+                            name=volume,
+                            drive_letter=volume_path
+                        )
+                        devices.append(usb_device)
+        except Exception:
+            pass
 
-            device_info = {
-                'device_id': device_id,
-                'vendor_id': device.get('ID_VENDOR_ID'),
-                'product_id': device.get('ID_MODEL_ID'),
-                'manufacturer': device.get('ID_VENDOR'),
-                'product_name': device.get('ID_MODEL'),
-                'serial_number': device.get('ID_SERIAL_SHORT'),
-                'mount_point': None
+        return devices
+
+    def start_monitoring(self):
+        """Start monitoring for USB device changes"""
+        import threading
+        import time
+
+        # Get initial devices
+        current_devices = self.get_connected_devices()
+
+        # Store current devices
+        for device in current_devices:
+            self.devices[device.id] = device
+
+        # Start monitoring thread
+        def monitor_thread():
+            while True:
+                try:
+                    # Get current devices
+                    new_devices = self.get_connected_devices()
+
+                    # Check for new devices
+                    new_device_ids = [device.id for device in new_devices]
+                    for device in new_devices:
+                        if device.id not in self.devices:
+                            # New device connected
+                            self.devices[device.id] = device
+                            self.device_connected.emit(device)
+
+                    # Check for disconnected devices
+                    for device_id in list(self.devices.keys()):
+                        if device_id not in new_device_ids:
+                            # Device disconnected
+                            self.device_disconnected.emit(device_id)
+                            del self.devices[device_id]
+
+                    # Sleep for a bit
+                    time.sleep(2)
+                except Exception as e:
+                    print(f"Error in USB monitoring: {str(e)}")
+                    time.sleep(5)  # Sleep longer on error
+
+        # Start thread
+        self.monitoring_thread = threading.Thread(target=monitor_thread, daemon=True)
+        self.monitoring_thread.start()
+
+        return current_devices
+
+    def stop_monitoring(self):
+        """Stop monitoring for USB device changes"""
+        # The thread is a daemon, so it will stop when the program exits
+        pass
+
+    def update_device_permission(self, device_id, permission):
+        """Update the permission for a device"""
+        if device_id in self.devices:
+            self.devices[device_id].permission = permission
+            # Update device history
+            self._update_device_history([self.devices[device_id]])
+            return True
+        return False
+
+    def _load_device_history(self):
+        """Load device history from file"""
+        import os
+        import json
+
+        history_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "device_history.json")
+
+        if os.path.exists(history_file):
+            try:
+                with open(history_file, "r") as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error loading device history: {str(e)}")
+
+        return {}
+
+    def _save_device_history(self, history):
+        """Save device history to file"""
+        import os
+        import json
+
+        history_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "device_history.json")
+
+        try:
+            with open(history_file, "w") as f:
+                json.dump(history, f, indent=4)
+        except Exception as e:
+            print(f"Error saving device history: {str(e)}")
+
+    def _update_device_history(self, devices):
+        """Update device history with new device information"""
+        history = self._load_device_history()
+
+        for device in devices:
+            # Create or update history entry
+            if device.id not in history:
+                history[device.id] = {
+                    "first_seen": device.connection_time,
+                    "connection_count": 1,
+                    "is_trusted": device.is_trusted,
+                    "name": device.name,
+                    "vendor_id": device.vendor_id,
+                    "product_id": device.product_id,
+                    "manufacturer": device.manufacturer,
+                    "product": device.product,
+                    "device_type": device.device_type,
+                    "last_connected": device.connection_time
+                }
+            else:
+                # Update existing entry
+                history[device.id]["connection_count"] += 1
+                history[device.id]["last_connected"] = device.connection_time
+                history[device.id]["is_trusted"] = device.is_trusted
+
+                # Update device information if available
+                if device.name:
+                    history[device.id]["name"] = device.name
+                if device.vendor_id:
+                    history[device.id]["vendor_id"] = device.vendor_id
+                if device.product_id:
+                    history[device.id]["product_id"] = device.product_id
+                if device.manufacturer:
+                    history[device.id]["manufacturer"] = device.manufacturer
+                if device.product:
+                    history[device.id]["product"] = device.product
+                if device.device_type != "unknown":
+                    history[device.id]["device_type"] = device.device_type
+
+        # Save updated history
+        self._save_device_history(history)
+
+    def set_device_trusted(self, device_id, trusted=True):
+        """Set a device as trusted or untrusted"""
+        if device_id in self.devices:
+            self.devices[device_id].is_trusted = trusted
+            # Update device history
+            self._update_device_history([self.devices[device_id]])
+            return True
+
+        # Check device history
+        history = self._load_device_history()
+        if device_id in history:
+            history[device_id]["is_trusted"] = trusted
+            self._save_device_history(history)
+            return True
+
+        return False
+
+    def get_device_history(self):
+        """Get the history of all devices"""
+        return self._load_device_history()
+
+    def get_trusted_devices(self):
+        """Get a list of trusted devices"""
+        history = self._load_device_history()
+        trusted_devices = []
+
+        for device_id, device_info in history.items():
+            if device_info.get("is_trusted", False):
+                trusted_devices.append({
+                    "id": device_id,
+                    "name": device_info.get("name", "Unknown Device"),
+                    "first_seen": device_info.get("first_seen", "Unknown"),
+                    "last_connected": device_info.get("last_connected", "Unknown"),
+                    "connection_count": device_info.get("connection_count", 0),
+                    "device_type": device_info.get("device_type", "unknown")
+                })
+
+        return trusted_devices
+
+    def identify_device(self, device_id):
+        """Identify a device based on its hardware IDs"""
+        # This would be expanded with a database of known devices
+        # For now, we'll just return basic information
+
+        if device_id in self.devices:
+            device = self.devices[device_id]
+            return {
+                "id": device.id,
+                "name": device.name,
+                "vendor_id": device.vendor_id,
+                "product_id": device.product_id,
+                "manufacturer": device.manufacturer,
+                "product": device.product,
+                "device_type": device.device_type,
+                "is_trusted": device.is_trusted
             }
 
-            # Try to find mount point for storage devices
-            for child in device.children:
-                if child.subsystem == 'block' and child.device_type == 'disk':
-                    for partition in child.children:
-                        if partition.device_type == 'partition':
-                            mount_info = subprocess.run(['findmnt', '-n', '-o', 'TARGET', partition.device_node],
-                                                      capture_output=True, text=True)
-                            if mount_info.returncode == 0 and mount_info.stdout.strip():
-                                device_info['mount_point'] = mount_info.stdout.strip()
-                                break
+        # Check device history
+        history = self._load_device_history()
+        if device_id in history:
+            return {
+                "id": device_id,
+                "name": history[device_id].get("name", "Unknown Device"),
+                "vendor_id": history[device_id].get("vendor_id", ""),
+                "product_id": history[device_id].get("product_id", ""),
+                "manufacturer": history[device_id].get("manufacturer", ""),
+                "product": history[device_id].get("product", ""),
+                "device_type": history[device_id].get("device_type", "unknown"),
+                "is_trusted": history[device_id].get("is_trusted", False)
+            }
 
-            devices[device_id] = device_info
-
-    except Exception as e:
-        print(f"Error getting USB devices: {e}")
-
-    return devices
-
-def get_connected_devices_macos():
-    """Get connected USB devices on macOS"""
-    devices = {}
-
-    try:
-        # Use system_profiler to get USB devices
-        cmd = ["system_profiler", "SPUSBDataType", "-json"]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-
-        # Parse the JSON output
-        usb_data = json.loads(result.stdout)
-
-        # Process USB devices
-        for controller in usb_data.get('SPUSBDataType', []):
-            process_macos_usb_device(controller, devices)
-
-    except Exception as e:
-        print(f"Error getting USB devices: {e}")
-
-    return devices
-
-def process_macos_usb_device(device, devices, parent_name=None):
-    """Process a USB device from macOS system_profiler output"""
-    # Skip USB hubs
-    if 'Hub' in device.get('_name', ''):
-        # But process its children
-        for child in device.get('_items', []):
-            process_macos_usb_device(child, devices, device.get('_name'))
-        return
-
-    # Generate a unique device ID
-    device_id = device.get('_name', '') + '_' + device.get('serial_num', '')
-    if not device_id or device_id == '_':
-        return
-
-    # Extract vendor and product IDs
-    vendor_id = None
-    product_id = None
-    vendor_product = device.get('vendor_id', '')
-    if vendor_product:
-        match = re.search(r'(0x[0-9a-f]{4}) (0x[0-9a-f]{4})', vendor_product, re.IGNORECASE)
-        if match:
-            vendor_id = match.group(1)[2:]  # Remove '0x' prefix
-            product_id = match.group(2)[2:]
-
-    device_info = {
-        'device_id': device_id,
-        'vendor_id': vendor_id,
-        'product_id': product_id,
-        'manufacturer': device.get('manufacturer', ''),
-        'product_name': device.get('_name', ''),
-        'serial_number': device.get('serial_num', ''),
-        'mount_point': None
-    }
-
-    # Try to find mount point for storage devices
-    if 'Media' in device:
-        for media in device['Media']:
-            if 'volumes' in media:
-                for volume in media['volumes']:
-                    if 'mount_point' in volume:
-                        device_info['mount_point'] = volume['mount_point']
-                        break
-
-    devices[device_id] = device_info
-
-    # Process child devices
-    for child in device.get('_items', []):
-        process_macos_usb_device(child, devices, device.get('_name'))
-
-def get_device_info(device_id):
-    """Get detailed information about a USB device"""
-    devices = get_connected_devices()
-    return devices.get(device_id)
+        return None
